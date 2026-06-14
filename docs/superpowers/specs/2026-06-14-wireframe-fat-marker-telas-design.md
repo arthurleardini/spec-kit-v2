@@ -42,7 +42,7 @@ Dois problemas:
 | # | Decisão |
 |---|---------|
 | D1 | `componentes.md` = **ponteiro fino** p/ um vocabulário de componentes genéricos de front (button, slider, input, table, card…), agnóstico de framework (Material Angular/MUI/shadcn = exemplos). Telas citam o nome genérico. Remove os 11 blocos bespoke. |
-| D2 | Estilo do sketch = **fat marker** (hand-drawn). |
+| D2 | Estilo do sketch = **fat marker**, baixíssima fidelidade: **só o layout, sem texto**. Rótulos viram rabiscos de marcador; a **forma** indica o tipo de componente. O significado vem da prosa (que é mantida). |
 | D3 | Autoria = bloco ` ```wireframe ` por tela, **DSL ASCII estilo wiremd** (subset próprio). |
 | D4 | Render = **parser próprio + rough.js** embutido inline no navigator (offline). |
 | D5 | Prosa = **aumentar** (mantém Objetivo/Conteúdo/Ações/Estados/Navegação + sketch). `Blocos:` → `Componentes:` (nomes genéricos). |
@@ -97,10 +97,18 @@ Exemplo canônico (T-01 Painel do Modelo):
    - **Layout:** motor simples — largura fixa do canvas (ex. 520px); fluxo vertical;
      `[[..]]` divide a largura em N colunas; cards desenham borda + empilham filhos;
      altura de linha fixa por tipo de nó.
-   - **Desenho:** **rough.js** (embutido inline, ~9KB) desenha retângulos/inputs/
-     botões com traço hand-drawn (fillStyle hachure, roughness alto = fat marker);
-     texto via SVG `<text>` com fonte handwriting (stack: "Comic Sans MS","Segoe Print",
-     cursive). Saída = um `<svg>` por wireframe, inserido no lugar do bloco.
+   - **Desenho:** **rough.js** (embutido inline, ~9KB) desenha as formas com traço
+     hand-drawn (fillStyle hachure, roughness alto = fat marker). **Sem texto legível** —
+     baixíssima fidelidade, só layout:
+     - rótulos/labels → **rabiscos de marcador** (1 linha horizontal grossa, largura
+       proporcional ao texto-fonte; ~2 linhas se for parágrafo).
+     - a **forma** distingue o componente: toolbar = barra no topo; card = retângulo;
+       button = retângulo arredondado (pill) com 1 rabisco curto; input = retângulo com
+       1 linha; chart = eixos + barras/linha rabiscadas; table = grade de linhas; list =
+       linhas empilhadas; banner/alert = faixa com `!`/ícone simples.
+     - Saída = um `<svg>` por wireframe, inserido no lugar do bloco.
+   - O texto do DSL serve só ao **autor** (e à prosa) — o renderer o converte em
+     rabisco, nunca em texto legível.
 3. rough.js é **vendorizado inline** no template do navigator (sem CDN) → funciona
    offline no remoto.
 
@@ -172,6 +180,7 @@ Reescrito para:
 - Smoke-test: navigator gera HTML; blocos `wireframe` viram `<svg>` (não code block cru).
 - rough.js inline (sem requisição externa) → abrir offline e ver o sketch.
 - Cada tela `T-NN` tem 1 bloco `wireframe` e linha `Componentes:` com nomes genéricos.
+- O sketch renderizado **não mostra texto legível** — só rabiscos de marcador + formas.
 - `componentes.md` sem os 11 blocos bespoke; aponta p/ Material.
 
 ## Questões em aberto

@@ -10,7 +10,7 @@ fontes:
 
 # <feature> — Contrato
 
-> Documento único da Camada de Contrato desta feature (4 capítulos). Responde:
+> Documento único da Camada de Requisitos desta feature (4 capítulos). Responde:
 > *como o usuário interage* (Cap. 1), *o que a feature entrega* (Cap. 2),
 > *o que o produto deve cumprir e como provar* (Cap. 3) e *que informação manipula* (Cap. 4).
 >
@@ -55,7 +55,7 @@ Para cada tela, uma subseção:
 - **Ações:** <o que o usuário pode fazer>
 - **Estados:** <vazio, carregando, erro, sucesso — os aplicáveis>
 - **Navegação:** <de onde chega, para onde vai>
-- **Blocos:** <blocos referenciados de ../_componentes.md>
+- **Blocos:** <blocos referenciados de ../componentes.md>
 
 ### 1.3 Diagrama de navegação (Mermaid) — obrigatório
 Diagrama de navegação entre as telas do Cap. 1.2. Cada nó é uma tela (use o `<id da tela>`); cada aresta é uma transição rotulada com a ação que a dispara.
@@ -89,7 +89,7 @@ flowchart TD
 Para cada história, uma subseção. As User Stories **não** levam critérios de aceite — a prova vive nos cenários do Cap. 3.3.
 
 #### <ID> — <título da história>
-- **Persona:** <persona> (link para ../../entities/personas/<x>.md)
+- **Persona:** <persona> (definida no Cap. 1 da Visão — ../visao.md)
 - **Objetivo:** Como <persona>, quero <ação>, para <benefício>.
 - **Passos da jornada:** <lista ordenada>
 - **Telas acionadas:** <ids de tela do Cap. 1>
@@ -172,7 +172,7 @@ Para cada história, uma subseção. As User Stories **não** levam critérios d
 - <entidade da feature, brainstorm, documento de origem usados para preencher este contrato>
 
 ## Relacionado
-- [Feature: <feature>](../../entities/features/<feature>.md)
-- [Visão do produto](../../intencao/visao.md)
-- [Catálogo de componentes](../_componentes.md)
-- [Índice do wiki](../../index.md)
+- [Visão do produto](../visao.md)
+- [Catálogo de componentes](../componentes.md)
+- [Outra feature](<feature>.md) <!-- mesma pasta Requisitos/ -->
+- [Índice do wiki](../index.md)

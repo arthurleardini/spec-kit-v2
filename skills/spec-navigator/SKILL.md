@@ -6,7 +6,7 @@ description: Use quando o usuário quer (re)gerar o artefato HTML navegável do 
 # spec-navigator
 
 (Re)gera o artefato HTML navegável do wiki rodando o script do spec-kit:
-- `refined-navigator.html` — navegador single-file da Camada de Intenção e da Camada de Contrato. Inclui o `blueprint.md` renderizado como tela de cadeia de valor.
+- `refined-navigator.html` — navegador single-file da Camada de Intenção e da Camada de Requisitos. Inclui o `blueprint.md` renderizado como tela de cadeia de valor.
 
 Deve rodar **após qualquer mudança no wiki** — sempre que os `.md` do `refined/` mudarem, o HTML fica desatualizado.
 
@@ -22,7 +22,7 @@ Quando o usuário pede para atualizar/regenerar a navegação, gerar o HTML, ou 
    ```bash
    python3 <spec-kit>/scripts/build-navigator.py <wiki>
    ```
-   Gera `<wiki>/refined-navigator.html` varrendo a Camada de Intenção e a de Contrato. Se existir `refined/blueprint.md`, ele aparece como uma tela de cadeia de valor dentro do navegador (não precisa de gerador separado).
+   Gera `<wiki>/refined-navigator.html` varrendo a Camada de Intenção e a de Requisitos. Se existir `refined/blueprint.md`, ele aparece como uma tela de cadeia de valor dentro do navegador (não precisa de gerador separado).
 3. Confirmar que o arquivo foi (re)criado e mostrar o caminho.
 
 ## Saída

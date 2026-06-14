@@ -7,11 +7,12 @@ status: ativo
 
 # Catálogo de Componentes
 
-Blocos de UI reutilizáveis. As telas das features (bloco B de cada `06-telas-fluxos.md`)
+Blocos de UI reutilizáveis. As telas das features (Cap. 1.2 de cada `Requisitos/<feature>.md`)
 referenciam estes blocos por nome em vez de redescrevê-los.
 
-<Os blocos abaixo são extraídos dos arquivos `06-telas-fluxos.md` existentes — os padrões
-que se repetem entre features, descritos de forma genérica. Um bloco por subseção.>
+<Os blocos abaixo são extraídos do Cap. 1 (Telas & Fluxos) dos `Requisitos/<feature>.md`
+existentes — os padrões que se repetem entre features, descritos de forma genérica. Um
+bloco por subseção.>
 
 ## <nome-do-bloco>
 - **O que é:** <descrição do padrão de UI — o que o bloco representa>
@@ -19,4 +20,4 @@ que se repetem entre features, descritos de forma genérica. Um bloco por subse�
 - **Usado em:** <telas / features que referenciam este bloco>
 
 ## Relacionado
-- [Índice do wiki](../index.md)
+- [Índice do wiki](index.md)

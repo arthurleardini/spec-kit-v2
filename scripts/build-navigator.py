@@ -94,9 +94,9 @@ def collect():
                         "content": read(path)}
         group_children.append({"label": label, "type": "doc", "id": doc_id})
 
-    # ---- Páginas-raiz do wiki ----
+    # ---- Páginas-raiz do wiki (4 mds + Visão + Componentes) ----
     raiz = []
-    for name in ("overview.md", "index.md", "log.md"):
+    for name in ("overview.md", "index.md", "log.md", "visao.md", "componentes.md"):
         f = REFINED / name
         if f.is_file():
             add_doc(f"wiki/{f.stem}", f, f.stem, raiz)
@@ -110,72 +110,15 @@ def collect():
     if raiz:
         tree.append({"label": "Wiki", "type": "group", "children": raiz})
 
-    # ---- Camada de Intenção ----
-    intencao = REFINED / "intencao"
-    if intencao.is_dir():
+    # ---- Camada de Requisitos (1 .md por feature) ----
+    req = REFINED / "Requisitos"
+    if req.is_dir():
         kids = []
-        for f in sorted(intencao.glob("*.md")):
-            add_doc(f"intencao/{f.stem}", f, f.stem, kids)
+        for f in sorted(req.glob("*.md")):
+            add_doc(f"requisitos/{f.stem}", f, f.stem, kids)
         if kids:
-            tree.append({"label": "Camada de Intenção", "type": "group", "children": kids})
-
-    # ---- Entidades ----
-    entities = REFINED / "entities"
-    if entities.is_dir():
-        ent_children = []
-        for sub in ("personas", "features"):
-            d = entities / sub
-            if d.is_dir():
-                kids = []
-                for f in sorted(d.glob("*.md")):
-                    add_doc(f"entities/{sub}/{f.stem}", f, f.stem, kids)
-                if kids:
-                    ent_children.append({"label": f"{sub.capitalize()} ({len(kids)})",
-                                         "type": "group", "children": kids})
-        if ent_children:
-            tree.append({"label": "Entidades", "type": "group", "children": ent_children})
-
-    # ---- Conceitos ----
-    concepts = REFINED / "concepts"
-    if concepts.is_dir():
-        kids = []
-        for f in sorted(concepts.glob("*.md")):
-            add_doc(f"concepts/{f.stem}", f, f.stem, kids)
-        if kids:
-            tree.append({"label": "Conceitos", "type": "group", "children": kids})
-
-    # ---- Camada de Contrato ----
-    if CONTRACTS.is_dir():
-        feat_dirs = sorted(d for d in CONTRACTS.iterdir()
-                           if d.is_dir() and not d.name.startswith("_"))
-        feat_group = []
-        for d in feat_dirs:
-            kids = []
-            # v2: 1 contrato.md por feature; mantém suporte aos docs antigos 06-09.
-            feat_files = sorted(set(d.glob("contrato.md")) | set(d.glob("0[6-9]-*.md")),
-                                key=lambda p: p.name)
-            for f in feat_files:
-                doc_id = f"contrato/{d.name}/{f.stem}"
-                t = md_title(f)
-                title = t if t.lower().startswith(d.name.lower()) else f"{d.name} — {t}"
-                docs[doc_id] = {"title": title,
-                                "path": str(f.relative_to(BASE)), "content": read(f)}
-                kids.append({"label": DOC_LABELS.get(f.stem, f.stem),
-                             "type": "doc", "id": doc_id})
-            if kids:
-                feat_group.append({"label": d.name, "type": "group", "children": kids})
-        if feat_group:
-            tree.append({"label": f"Camada de Contrato ({len(feat_group)})",
-                         "type": "group", "children": feat_group})
-
-    # ---- Análises ----
-    analyses = REFINED / "analyses"
-    if analyses.is_dir():
-        kids = []
-        for f in sorted(analyses.glob("*.md")):
-            add_doc(f"analyses/{f.stem}", f, f.stem, kids)
-        if kids:
-            tree.append({"label": "Análises", "type": "group", "children": kids})
+            tree.append({"label": f"Requisitos ({len(kids)})",
+                         "type": "group", "children": kids})
 
     return docs, tree
 

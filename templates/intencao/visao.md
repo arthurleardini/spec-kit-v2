@@ -11,7 +11,7 @@ fontes: []
 
 Documento canônico da Camada de Intenção. Consolida em três capítulos a descrição do produto-alvo: **Produto** (quem somos e para quem), **Glossário** (qual é o vocabulário) e **Regras & Métricas** (quais são as leis e como nos medimos). As fontes que sustentam cada afirmação estão agrupadas na seção "Fontes", ao final.
 
-> **Convenção de marcadores.** Marcar inferências (algo deduzido, não afirmado pela fonte) com `*(inferência)*` e lacunas com `⚠ NÃO IDENTIFICADO — definir: <pergunta>`. IDs (`JTBD-NN`, `RN-NN`, `RN-AI-NN`, `IM-NN`) são estáveis e referenciados pela Camada de Contrato — não renumerar; ao remover um item, manter o número vago.
+> **Convenção de marcadores.** Marcar inferências (algo deduzido, não afirmado pela fonte) com `*(inferência)*` e lacunas com `⚠ NÃO IDENTIFICADO — definir: <pergunta>`. IDs (`JTBD-NN`, `RN-NN`, `RN-AI-NN`, `IM-NN`) são estáveis e referenciados pela Camada de Requisitos — não renumerar; ao remover um item, manter o número vago.
 
 <!--
 SEÇÕES OPCIONAIS (não geradas por padrão — incluir só quando explicitamente pedido):
@@ -66,14 +66,6 @@ Diferenciais:
 
 - **JTBD-01** — Quando <situação>, quero <motivação>, para <resultado esperado>.
 - **JTBD-02** — <...>
-
-### Fronteira de escopo
-
-<O ciclo/fronteira que o produto cobre. Se houver um produto/sistema complementar ou adjacente, delimitar a fronteira aqui. Tabela capability × responsável — opcional, incluir só se relevante.>
-
-| Capability | <este produto> | <produto adjacente> |
-|---|---|---|
-| <capability> | <✅ / —> | <✅ / —> |
 
 ### Não-objetivos
 
@@ -184,8 +176,8 @@ Invariantes e políticas do domínio independem de interface — valem em qualqu
 ---
 
 ## Relacionado
-- [Blueprint](../blueprint.md)
-- [Índice do wiki](../index.md)
+- [Blueprint](blueprint.md)
+- [Índice do wiki](index.md)
 
 ---
 

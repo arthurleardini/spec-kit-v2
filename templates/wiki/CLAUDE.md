@@ -10,37 +10,41 @@ perguntas.
 - **Wiki** — `refined/`. Markdown gerado/mantido pelo agente.
 - **Schema** — este arquivo.
 
-## Layout de refined/
+## Layout de refined/ (estrutura FLAT)
 - `index.md` — catálogo de tudo, por categoria. Ler PRIMEIRO ao responder uma query.
 - `log.md` — histórico append-only (`## [YYYY-MM-DD] <op> | <título>`).
 - `overview.md` — porta de entrada.
-- `intencao/visao.md` — Camada de Intenção: **um único documento** (a "Visão"), com 3
+- `visao.md` — Camada de Intenção, na **raiz**: **um único documento** (a "Visão"), com 3
   capítulos H2: `## 1. Produto` (visão, proposta de valor, personas, jobs `JTBD-NN`,
-  fronteira de escopo, não-objetivos), `## 2. Glossário` (termos do domínio +
+  não-objetivos), `## 2. Glossário` (termos do domínio +
   convenções de nomenclatura), `## 3. Regras & Métricas` (regras de negócio `RN-NN`,
   regras dependentes de IA `RN-AI-NN` — só se houver — e métricas de sucesso `IM-NN`:
   NSM + 1-2 guard-rails). Fecha com `## Questões em aberto`, `## Fontes`,
   `## Relacionado`.
-- `contracts/<feature>/contrato.md` — Camada de Contrato: **um único documento por
+- `Requisitos/<feature>.md` — Camada de Requisitos: **um único documento por
   feature**, com frontmatter `eixo: processo | classe` e 4 capítulos H2:
   `## 1. Telas & Fluxos` (Mermaid de fluxo na 1.1 + Mermaid de navegação na 1.3; sem
   subseção 1.4 separada), `## 2. Histórias` (`US-NN` — **sem critérios de aceite**, a
   prova vive no Cap. 3.3), `## 3. Requisitos & Cenários de Teste` (`RF-NN`,
   `RNF-*` + cenários Gherkin-like), `## 4. Dados` (modelo **derivado**: da classe se
   `eixo=classe`; das atividades se `eixo=processo`).
-- `contracts/_componentes.md` — catálogo de componentes (blocos de UI reutilizáveis),
+- `componentes.md` — catálogo de componentes (blocos de UI reutilizáveis), na **raiz**,
   artefato product-level.
-- `blueprint.md` — visão geral da solução (cadeia de valor), artefato product-level.
-- `_archive/` — artefatos obsoletos.
-- ~~`entities/`, `concepts/`, `analyses/`~~ — **removidos / não usados** na v2.
+- `blueprint.md` — visão geral da solução (cadeia de valor), na **raiz**, artefato
+  product-level.
+- `_archive/` — artefatos obsoletos *(opcional)*.
+- ~~`intencao/`, `contracts/`, `entities/`, `concepts/`, `analyses/`~~ — **não existem**
+  na estrutura FLAT da v2 (a Visão e o catálogo de componentes ficam na raiz; os docs de
+  feature ficam em `Requisitos/`).
 
 ## Mínimo comum vs. opcional
-- **Mínimo comum:** `intencao/visao.md` (3 caps) + `contracts/<feature>/contrato.md`
+- **Mínimo comum:** `visao.md` (3 caps) + `Requisitos/<feature>.md`
   por feature (4 caps) + `blueprint.md`.
 - **Opcional** (só quando o projeto pedir): princípios de produto (`PR-NN`),
   capacidades de IA como doc dedicado (`CAI-NN` — o essencial já vira `RN-AI-NN` na
   Visão), roadmap de evolução, métricas de input/health detalhadas, auditoria extra.
-- **Removidos / não usados na v2:** `entities/`, `concepts/`, `analyses/`.
+- **Não existem na estrutura FLAT da v2:** pastas `intencao/`, `contracts/`,
+  `entities/`, `concepts/`, `analyses/`.
 
 ## Eixo do contrato (granularidade)
 - `eixo: processo` — fluxo/atividades; a 1.1 funde fluxo e processo num único
@@ -61,7 +65,8 @@ Blocos ` ```mermaid ` embutidos no markdown, renderizados no navegador:
   no contrato, também `eixo: processo | classe`.
 - `tipo` ∈ {overview, intencao, contract, persona, feature, concept, analysis, indice,
   blueprint}.
-- Links relativos a nível de arquivo: `[texto](../intencao/visao.md)`.
+- Links relativos a nível de arquivo. Da raiz de `refined/` para a Visão: `[texto](visao.md)`;
+  de um doc em `Requisitos/` para a Visão: `[texto](../visao.md)`.
 - Toda página termina com `## Relacionado` (links de saída).
 - IDs de cross-reference: `JTBD-NN`, `RN-NN`, `RN-AI-NN`, `IM-NN`, `US-NN`, `RF-NN`,
   `RNF-*` (e os opcionais `PR-NN`, `CAI-NN` quando existirem) — referência textual +
@@ -78,8 +83,8 @@ Dois caminhos:
   novos `trusted/`.
 - **Avulso:** o agente recebe a fonte, converte para Markdown se preciso, discute os
   takeaways, escreve um resumo em `trusted/`.
-Depois (comum): o agente lê o(s) `trusted` novo(s), propaga para `intencao/` e
-`contracts/`, marca `⚠ CONTRADIÇÃO` em conflitos (nunca sobrescreve em
+Depois (comum): o agente lê o(s) `trusted` novo(s), propaga para `visao.md` e os docs em
+`Requisitos/`, marca `⚠ CONTRADIÇÃO` em conflitos (nunca sobrescreve em
 silêncio), atualiza `index.md`, anexa entrada em `log.md`.
 
 ### query

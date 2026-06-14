@@ -22,8 +22,8 @@ O diretório `<wiki>` que contém `refined/`. Sem outra fonte — o lint só lê
    - **Páginas sem `## Relacionado`** — toda página do wiki deve terminar com essa seção.
 3. Montar o relatório agrupado por tipo de problema, com caminho do arquivo e, quando aplicável, linha/contexto.
 4. Reportar no `refined/log.md` — anexar entrada `## [YYYY-MM-DD] lint | <resumo>` com a contagem por categoria.
-5. Se o relatório for grande (muitos itens), criar uma página detalhada em `refined/analyses/` e referenciá-la na entrada do `log.md`.
+5. Se o relatório for grande (muitos itens), criar uma página detalhada em `refined/_archive/` e referenciá-la na entrada do `log.md`.
 
 ## Saída
 - Relatório de health-check com links quebrados, páginas órfãs, lacunas `⚠` por página e páginas sem `## Relacionado`.
-- Entrada de `lint` no `log.md`; página em `refined/analyses/` quando o relatório for substancial.
+- Entrada de `lint` no `log.md`; página em `refined/_archive/` quando o relatório for substancial.

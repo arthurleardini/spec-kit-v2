@@ -1,16 +1,16 @@
 ---
 name: spec-to-html
-description: Use quando o usuário quer gerar um protótipo HTML navegável (sem backend) das telas de um produto a partir da Camada de Contrato de um wiki wikiLLM, no design system EloGroup. Skill-índice da família spec-to-html.
+description: Use quando o usuário quer gerar um protótipo HTML navegável (sem backend) das telas de um produto a partir da Camada de Requisitos de um wiki wikiLLM, no design system EloGroup. Skill-índice da família spec-to-html.
 ---
 
 # spec-to-html
 
 Gera um **protótipo HTML navegável** — telas estáticas, sem backend, montadas num
-arquivo único que abre com duplo-clique — a partir da Camada de Contrato de um wiki
+arquivo único que abre com duplo-clique — a partir da Camada de Requisitos de um wiki
 wikiLLM, no design system EloGroup.
 
 Responde à pergunta *Como ficam, na prática, as telas que a spec descreve?* — dá
-forma visual e navegável à Camada de Contrato para validação com usuários e
+forma visual e navegável à Camada de Requisitos para validação com usuários e
 stakeholders, sem escrever um produto de verdade.
 
 Esta é a **skill-índice** da família `spec-to-html`. Ela não gera artefato: orienta
@@ -18,9 +18,9 @@ o uso das quatro sub-skills de fase, na ordem, com os dois checkpoints de revis�
 
 ## Quando usar
 Quando o usuário pede um protótipo navegável, mockup clicável ou demo de telas de um
-produto — depois que a Camada de Contrato já existe no wiki (em especial os
-`06-telas-fluxos.md` das features e o catálogo `_componentes.md`). Não usar antes de
-a Camada de Contrato estar escrita: o protótipo é uma renderização dela, não a fonte.
+produto — depois que a Camada de Requisitos já existe no wiki (em especial o Cap. 1,
+Telas & Fluxos, dos `Requisitos/<feature>.md` das features e o catálogo `componentes.md`). Não usar antes de
+a Camada de Requisitos estar escrita: o protótipo é uma renderização dela, não a fonte.
 
 ## As quatro fases
 Rodar as sub-skills nesta ordem:

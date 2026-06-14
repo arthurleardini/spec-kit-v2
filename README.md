@@ -1,7 +1,7 @@
 # Spec Kit (v2)
 
 Kit de skills para criar uma especificação de produto no modelo wikiLLM (Camada de
-Intenção + Camada de Contrato), independente da fonte.
+Intenção + Camada de Requisitos), independente da fonte.
 
 ## O que é
 
@@ -12,13 +12,14 @@ um agente, com o conhecimento de produto destilado de fontes curadas.
 A spec é organizada em duas camadas:
 
 - **Camada de Intenção** — *por que e para quem* o produto existe. Consolidada em **um
-  único documento**, `refined/intencao/visao.md` (a "Visão"), com 3 capítulos:
-  1. Produto (visão, proposta de valor, personas, jobs), 2. Glossário do domínio,
-  3. Regras & Métricas.
-- **Camada de Contrato** — *o que* o produto faz, feature a feature. Por feature, **um
-  único documento**, `refined/contracts/<feature>/contrato.md`, com 4 capítulos
+  único documento**, `refined/visao.md` (a "Visão", na raiz de `refined/`), com 3
+  capítulos: 1. Produto (visão, proposta de valor, personas, jobs), 2. Glossário do
+  domínio, 3. Regras & Métricas.
+- **Camada de Requisitos** — *o que* o produto faz, feature a feature. Por feature, **um
+  único documento**, `refined/Requisitos/<feature>.md`, com 4 capítulos
   (telas/fluxos, histórias, requisitos & cenários de teste, dados); mais o blueprint
-  product-level (cadeia de valor) e o catálogo de componentes.
+  product-level (cadeia de valor) e o catálogo de componentes (`refined/componentes.md`,
+  na raiz).
 
 O resultado é um wiki em `refined/` — markdown com links relativos, IDs estáveis de
 cross-reference (`JTBD-NN`, `RN-NN`, …) e dois artefatos HTML navegáveis
@@ -36,9 +37,9 @@ produto **agnóstica** mantida.
 A spec mínima de qualquer produto é composta por **três artefatos**:
 
 - **Mínimo comum**
-  - `refined/intencao/visao.md` — a Visão, com os 3 capítulos (Produto, Glossário,
+  - `refined/visao.md` — a Visão (na raiz), com os 3 capítulos (Produto, Glossário,
     Regras & Métricas).
-  - `refined/contracts/<feature>/contrato.md` — um contrato por feature, com os 4
+  - `refined/Requisitos/<feature>.md` — um doc por feature, com os 4
     capítulos (Telas & Fluxos, Histórias, Requisitos & Cenários de Teste, Dados). As
     histórias **não** levam critérios de aceite — a prova vive nos cenários do Cap. 3.3.
   - `refined/blueprint.md` — blueprint product-level (cadeia de valor).
@@ -50,7 +51,9 @@ A spec mínima de qualquer produto é composta por **três artefatos**:
   - Métricas de input/health detalhadas (além do NSM + 1-2 guard-rails).
   - Auditoria extra.
 
-  **Removidos / não usados na v2:** `entities/`, `concepts/`, `analyses/`.
+  **Não existem na estrutura FLAT da v2:** pastas `intencao/`, `contracts/`, `entities/`,
+  `concepts/`, `analyses/`. A Visão e o catálogo de componentes ficam na raiz de
+  `refined/`; os docs de feature ficam em `refined/Requisitos/`.
 
 ## Portas de entrada (conversa / docs / pipeline)
 
@@ -75,18 +78,18 @@ não um `raw/`/`trusted/` não muda o fluxo.
    por produto.
 2. **Camada de Intenção** — rodar a skill **`intencao-visao`** com a fonte disponível
    (conversa, docs ou trusted). Gera/mantém o documento único
-   `refined/intencao/visao.md` inteiro (3 capítulos).
+   `refined/visao.md` (na raiz) inteiro (3 capítulos).
 3. **`spec-audit`** — auditar a Visão pelo método CSD (Certezas, Suposições, Dúvidas);
    resolver as perguntas acionáveis antes de avançar.
-4. **Camada de Contrato** — por feature, definir o `eixo` (`processo` ou `classe`) e
+4. **Camada de Requisitos** — por feature, definir o `eixo` (`processo` ou `classe`) e
    rodar as skills `contrato-*`: cada uma escreve um **capítulo** do
-   `contrato.md` da feature (telas/fluxos com Mermaid, histórias, requisitos &
+   `Requisitos/<feature>.md` da feature (telas/fluxos com Mermaid, histórias, requisitos &
    cenários de teste, dados derivados). Rodar também `contrato-blueprint` para o
    blueprint product-level.
 5. **`spec-navigator`** — rodar os scripts para gerar `refined-navigator.html` e
    `refined/blueprint.html`. Repetir após qualquer mudança no wiki.
 6. **`spec-to-html`** — gerar um protótipo HTML navegável das telas a partir da
-   Camada de Contrato (opcional, depois que ela existe). Roda as 4 sub-skills de
+   Camada de Requisitos (opcional, depois que ela existe). Roda as 4 sub-skills de
    fase: `plano`, `scaffold`, `telas`, `build`.
 7. **Manutenção contínua** — `spec-lint` para o health-check (links quebrados,
    órfãs, lacunas) e `spec-wiki` para integrar fontes novas (`ingest`) ou consultar
@@ -94,7 +97,7 @@ não um `raw/`/`trusted/` não muda o fluxo.
 
 ## Eixo de granularidade do contrato
 
-Cada `contrato.md` traz no frontmatter `eixo: processo | classe`, que orienta o Cap. 1
+Cada `Requisitos/<feature>.md` traz no frontmatter `eixo: processo | classe`, que orienta o Cap. 1
 (Mermaid) e o Cap. 4 (Dados):
 
 - **`processo`** — fluxo/atividades. A 1.1 funde fluxo e processo num único flowchart
@@ -119,13 +122,13 @@ Blocos ` ```mermaid ` embutidos no markdown são renderizados no navegador:
 
 | Skill | O que faz |
 | --- | --- |
-| `intencao-visao` | Produz e mantém o documento único `intencao/visao.md` (a Visão) — os 3 capítulos: Produto/Personas/Jobs, Glossário do domínio, Regras & Métricas. Especialista; adiciona seções opcionais (princípios, capacidades-IA, roadmap) só quando pedido. |
+| `intencao-visao` | Produz e mantém o documento único `visao.md` (a Visão, na raiz) — os 3 capítulos: Produto/Personas/Jobs, Glossário do domínio, Regras & Métricas. Especialista; adiciona seções opcionais (princípios, capacidades-IA, roadmap) só quando pedido. |
 
-### Camada de Contrato (5)
+### Camada de Requisitos (5)
 
 | Skill | O que faz |
 | --- | --- |
-| `contrato-telas-fluxos` | Escreve o **Cap. 1 (Telas & Fluxos)** do `contrato.md` da feature, com Mermaid de fluxo (1.1) e de navegação (1.3). |
+| `contrato-telas-fluxos` | Escreve o **Cap. 1 (Telas & Fluxos)** do `Requisitos/<feature>.md` da feature, com Mermaid de fluxo (1.1) e de navegação (1.3). |
 | `contrato-historias` | Escreve o **Cap. 2 (Histórias)** — `US-NN`. |
 | `contrato-requisitos` | Escreve o **Cap. 3 (Requisitos & Cenários de Teste)** — `RF-NN`, `RNF-*` + cenários de teste (Gherkin-like). |
 | `contrato-dados` | Escreve o **Cap. 4 (Dados)** — modelo derivado (da classe, se `eixo=classe`; das atividades, se `eixo=processo`). |
@@ -143,7 +146,7 @@ Blocos ` ```mermaid ` embutidos no markdown são renderizados no navegador:
 
 ### Geração de protótipo (5)
 
-Família `spec-to-html` — transforma a Camada de Contrato num protótipo HTML
+Família `spec-to-html` — transforma a Camada de Requisitos num protótipo HTML
 navegável (sem backend), que abre com duplo-clique como arquivo único.
 
 | Skill | O que faz |
@@ -158,16 +161,17 @@ navegável (sem backend), que abre com duplo-clique como arquivo único.
 
 ```
 refined/
-  index.md  log.md  overview.md  blueprint.md
-  intencao/
-    visao.md                       # a Visão — 3 capítulos (mínimo)
-  contracts/
-    <feature>/contrato.md          # 1 contrato por feature — 4 capítulos (mínimo)
-    _componentes.md                # catálogo de componentes (product-level)
-  _archive/                        # artefatos obsoletos
+  index.md  log.md  overview.md  blueprint.md   # 4 mds da wiki
+  visao.md                         # a Visão — 3 capítulos (mínimo) — na raiz
+  componentes.md                   # catálogo de componentes (product-level) — na raiz
+  Requisitos/
+    <feature>.md                   # 1 doc por feature — 4 capítulos (mínimo)
+  _archive/                        # artefatos obsoletos (opcional)
 ```
 
-> `entities/`, `concepts/` e `analyses/` foram **removidos / não usados** na v2.
+> Estrutura **FLAT**: não há pastas `intencao/`, `contracts/`, `entities/`, `concepts/`
+> nem `analyses/`. A Visão e o catálogo de componentes ficam na raiz; os docs de feature
+> ficam em `Requisitos/`.
 
 ## Scripts
 
@@ -175,7 +179,7 @@ Em `scripts/` — utilitários Python (3.11) que geram os artefatos navegáveis 
 do `refined/`. `<wiki>` é o diretório que contém `refined/`.
 
 - **`scripts/build-navigator.py <wiki>`** — varre a Camada de Intenção
-  (`intencao/visao.md`) e a Camada de Contrato (`contracts/<feature>/contrato.md`) e
+  (`visao.md`) e a Camada de Requisitos (`Requisitos/<feature>.md`) e
   embute todo o conteúdo num único `refined-navigator.html`, que abre com duplo-clique
   (sem servidor). Diagramas Mermaid embutidos são renderizados. Se existir
   `refined/blueprint.md`, ele é renderizado como uma tela de cadeia de valor dentro do

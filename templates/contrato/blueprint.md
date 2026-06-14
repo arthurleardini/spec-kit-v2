@@ -11,7 +11,7 @@ que a compõem. Marcadores por feature: `[ator:<ator>]` indica a persona princip
 `[ia]` marca features com componente de IA.>
 
 ## <Etapa da cadeia de valor>
-- [<feature legível>](entities/features/<slug>.md) — <resumo>  [ator:<ator>] [ia]
+- [<feature legível>](Requisitos/<slug>.md) — <resumo>  [ator:<ator>] [ia]
 
 ## <Etapa da cadeia de valor>
-- [<feature legível>](entities/features/<slug>.md) — <resumo>  [ator:<ator>]
+- [<feature legível>](Requisitos/<slug>.md) — <resumo>  [ator:<ator>]

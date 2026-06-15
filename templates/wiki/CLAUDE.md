@@ -22,13 +22,24 @@ perguntas.
   NSM + 1-2 guard-rails). Fecha com `## Questões em aberto`, `## Fontes`,
   `## Relacionado`.
 - `Requisitos/<feature>.md` — Camada de Requisitos: **um único documento por
-  feature**, com frontmatter `eixo: processo | classe` e 4 capítulos H2:
+  feature**, com frontmatter `eixo: processo | classe` e **3 capítulos** H2:
   `## 1. Telas & Fluxos` (Mermaid de fluxo na 1.1 + Mermaid de navegação na 1.3; sem
-  subseção 1.4 separada; **cada tela `T-NN` traz um bloco ` ```wireframe ` (sketch
-  fat-marker do layout) e a linha `Componentes:` com nomes genéricos**), `## 2. Histórias` (`US-NN` — **sem critérios de aceite**, a
-  prova vive no Cap. 3.3), `## 3. Requisitos & Cenários de Teste` (`RF-NN`,
-  `RNF-*` + cenários Gherkin-like), `## 4. Dados` (modelo **derivado**: da classe se
-  `eixo=classe`; das atividades se `eixo=processo`).
+  subseção 1.4 separada; **cada tela `T-NN` declara `Arquétipo:` (`A-NN` de
+  `telas-comuns.md`) + bloco ` ```wireframe ` (sketch fat-marker) + linha `Componentes:`**),
+  `## 2. Requisitos & Cenários de Teste` (`2.1 Personas & objetivos` — a intenção do
+  usuário; `2.2 RF-NN`; `2.3 RNF-*`; `2.4` cenários Gherkin-like — citando os transversais
+  `RNF-T-*`/`RF-T-*` por ID), `## 3. Dados` (referencia o `modelo-dados.md` transversal e
+  descreve só o que é próprio; modelo **derivado**: da classe se `eixo=classe`; das
+  atividades se `eixo=processo`).
+  > **Não há mais capítulo de Histórias** — Histórias e Requisitos eram redundantes; a
+  > intenção do usuário (persona → objetivo) foi absorvida pela §2.1.
+- **Transversais (na raiz)** — pensar transversalmente, não por feature:
+  - `modelo-dados.md` — **modelo de dados canônico**: entidades do domínio num só modelo
+    compartilhado (`## Entidades` + `## Relações` + `erDiagram`). Cada feature referencia.
+  - `requisitos-transversais.md` — requisitos comuns: `RNF-T-<categoria>-NN` + `RF-T-NN`.
+    As features citam esses IDs em vez de redefinir.
+  - `telas-comuns.md` — **arquétipos de tela** `A-NN` (wireframe + "Quando usar"). Cada
+    `T-NN` de feature declara seu `Arquétipo:` e descreve só o que muda.
 - `componentes.md` — **ponteiro fino** (na **raiz**) p/ um vocabulário **genérico de
   front** (button, input, table, card, toolbar, chart…), agnóstico de framework; cada
   projeto mapeia p/ sua lib concreta (Material Angular/MUI/shadcn/HTML — exemplos). **Não**
@@ -40,9 +51,17 @@ perguntas.
   na estrutura FLAT da v2 (a Visão e o catálogo de componentes ficam na raiz; os docs de
   feature ficam em `Requisitos/`).
 
+## Princípio transversal-first
+Modelo de dados, telas e requisitos são pensados **transversalmente** (um modelo canônico,
+um catálogo de arquétipos de tela, um conjunto de `RNF-T-*`/`RF-T-*`), **não duplicados por
+feature**. Cada `Requisitos/<feature>.md` **referencia** os transversais e descreve apenas o
+que é específico. Corolário: **minimizar o número de telas e a complexidade** — reusar
+arquétipos de `telas-comuns.md` e fundir vistas em abas/drawers em vez de multiplicar telas.
+
 ## Mínimo comum vs. opcional
-- **Mínimo comum:** `visao.md` (3 caps) + `Requisitos/<feature>.md`
-  por feature (4 caps) + `blueprint.md`.
+- **Mínimo comum:** `visao.md` (3 caps) + os 3 transversais (`modelo-dados.md`,
+  `requisitos-transversais.md`, `telas-comuns.md`) + `Requisitos/<feature>.md`
+  por feature (3 caps) + `blueprint.md`.
 - **Opcional** (só quando o projeto pedir): princípios de produto (`PR-NN`),
   capacidades de IA como doc dedicado (`CAI-NN` — o essencial já vira `RN-AI-NN` na
   Visão), roadmap de evolução, métricas de input/health detalhadas, auditoria extra.
@@ -51,16 +70,17 @@ perguntas.
 
 ## Eixo do contrato (granularidade)
 - `eixo: processo` — fluxo/atividades; a 1.1 funde fluxo e processo num único
-  flowchart (estilo BPMN leve); dados do Cap. 4 derivam das atividades.
+  flowchart (estilo BPMN leve); dados do Cap. 3 derivam das atividades.
 - `eixo: classe` — formulários/objetos; a 1.1 é um flowchart simples do ciclo do
   formulário/registro; cada formulário ≈ uma classe; a classe já é o modelo de dados
-  do Cap. 4.
+  do Cap. 3.
 
 ## Mermaid
 Blocos ` ```mermaid ` embutidos no markdown, renderizados no navegador:
 - Contrato Cap. 1.1 — fluxo (processo, se `eixo=processo`; ciclo do formulário, se
   `eixo=classe`).
 - Contrato Cap. 1.3 — navegação entre telas (sempre). **Não** há subseção 1.4 separada.
+- Transversal `modelo-dados.md` — `erDiagram` do modelo canônico (sempre).
 - Visão Cap. 1 — jornada macro (opcional).
 
 ## Wireframe nas telas
@@ -109,4 +129,6 @@ lacunas `⚠`. Relatório vai para `log.md`.
 ## Navegação
 <Comando(s) que regeneram artefatos de navegação a partir do `refined/`, se houver —
 ex.: um navigator HTML (que também renderiza o `blueprint.md` como tela de cadeia de
-valor). Rodar após qualquer mudança no `refined/`.>
+valor). Rodar após qualquer mudança no `refined/`.> O navegador agrupa `modelo-dados.md`,
+`requisitos-transversais.md`, `telas-comuns.md` e `componentes.md` sob o submenu
+**Transversais**, separados da Visão e das features.

@@ -96,7 +96,7 @@ def collect():
 
     # ---- Páginas-raiz do wiki (4 mds + Visão + Componentes) ----
     raiz = []
-    for name in ("overview.md", "index.md", "log.md", "visao.md", "componentes.md"):
+    for name in ("overview.md", "index.md", "log.md", "visao.md"):
         f = REFINED / name
         if f.is_file():
             add_doc(f"wiki/{f.stem}", f, f.stem, raiz)
@@ -119,6 +119,15 @@ def collect():
         if kids:
             tree.append({"label": f"Requisitos ({len(kids)})",
                          "type": "group", "children": kids})
+
+    # ---- Transversais (modelo de dados, requisitos, telas comuns, componentes) ----
+    trans = []
+    for name in ("modelo-dados.md", "requisitos-transversais.md", "telas-comuns.md", "componentes.md"):
+        f = REFINED / name
+        if f.is_file():
+            add_doc(f"wiki/{f.stem}", f, f.stem, trans)
+    if trans:
+        tree.append({"label": "Transversais", "type": "group", "children": trans})
 
     return docs, tree
 
@@ -401,16 +410,16 @@ function dbmlToMermaid(dbml) {
 }
 
 /* ---------- Render ---------- */
-/* ---------- Wireframe fat-marker (parser + render, só layout, sem texto) ---------- */
+/* ---------- Wireframe fat-marker (parser + render, layout + texto) ---------- */
 function parseInline(text) {
   const re = /\[~[^\]]*~\]|\[[^\]]*?_{2,}\]|\[[^\]]+\]|[^\[]+/g;
   const out = []; let m;
   while ((m = re.exec(text)) !== null) {
     const t = m[0].trim(); if (!t) continue;
-    if (/^\[~.*~\]$/.test(t)) out.push({t:'chart'});
-    else if (/^\[.*_{2,}\]$/.test(t)) out.push({t:'input', n:t.replace(/[\[\]_]/g,'').length});
-    else if (/^\[.+\]$/.test(t)) out.push({t:'button', n:t.slice(1,-1).trim().length});
-    else out.push({t:'label', n:t.length});
+    if (/^\[~.*~\]$/.test(t)) out.push({t:'chart', s:t.replace(/^\[~|~\]$/g,'').trim()});
+    else if (/^\[.*_{2,}\]$/.test(t)) out.push({t:'input', s:t.replace(/[\[\]]/g,'').replace(/_+/g,'').trim()});
+    else if (/^\[.+\]$/.test(t)) out.push({t:'button', s:t.slice(1,-1).trim()});
+    else out.push({t:'label', s:t});
   }
   return out;
 }
@@ -427,7 +436,7 @@ function parseWireframe(src) {
       if (ind < minIndent) break;
       const s = raw.trim();
       let mm;
-      if ((mm = s.match(/^card\s+"?(.*?)"?:$/))) { i++; const kids = block(ind+1); nodes.push({t:'card', kids}); continue; }
+      if ((mm = s.match(/^card\s+"?(.*?)"?:$/))) { i++; const kids = block(ind+1); nodes.push({t:'card', s:mm[1], kids}); continue; }
       if (s[0] === '|') {
         const rows = [];
         while (i < lines.length && lines[i].trim()[0] === '|') {
@@ -439,21 +448,21 @@ function parseWireframe(src) {
       }
       if (s.startsWith('- ')) {
         const items = [];
-        while (i < lines.length && lines[i].trim().startsWith('- ')) { items.push(lines[i].trim().slice(2).length); i++; }
+        while (i < lines.length && lines[i].trim().startsWith('- ')) { items.push(lines[i].trim().slice(2)); i++; }
         nodes.push({t:'list', items}); continue;
       }
       i++;
-      if (s.startsWith('# ')) nodes.push({t:'title', n:s.slice(2).length});
-      else if (s.startsWith('## ')) nodes.push({t:'sub', n:s.slice(3).length});
+      if (s.startsWith('# ')) nodes.push({t:'title', s:s.slice(2)});
+      else if (s.startsWith('## ')) nodes.push({t:'sub', s:s.slice(3)});
       else if ((mm = s.match(/^\[\[(.+)\]\]$/))) nodes.push({t:'row', cells: mm[1].split('|').map(c=>parseInline(c.trim()))});
-      else if (s.startsWith('(!)')) nodes.push({t:'alert'});
+      else if (s.startsWith('(!)')) nodes.push({t:'alert', s:s.slice(3).trim()});
       else nodes.push({t:'line', items: parseInline(s)});
     }
     return nodes;
   }
   return block(0);
 }
-const WF = {W:540, PAD:12, GAP:8, TITLE:34, SUB:22, ROW:52, LINE:34, CHART:74, ALERT:32, LI:20, TR:26, CH:22, CPAD:8};
+const WF = {W:560, PAD:12, GAP:8, TITLE:34, SUB:22, ROW:54, LINE:34, CHART:88, ALERT:32, LI:22, TR:28, CH:26, CPAD:9};
 function wfMeasure(nodes) { let h=0; for (const n of nodes) h += wfH(n) + WF.GAP; return h; }
 function wfH(n) {
   switch(n.t){
@@ -473,42 +482,52 @@ function renderWireframe(src) {
   svg.setAttribute('viewBox','0 0 '+W+' '+total);
   svg.setAttribute('width','100%'); svg.setAttribute('style','max-width:'+W+'px;height:auto');
   const rc = rough.svg(svg);
-  const FM = {roughness:2.2, strokeWidth:2.4, stroke:'#222'};
+  const FM = {roughness:2.1, strokeWidth:2.2, stroke:'#2a2a2a'};
   const g = el => svg.appendChild(el);
-  const scrib = (x,y,w) => { if(w>4) g(rc.line(x,y,x+Math.min(w,9999),y,{roughness:2.6,strokeWidth:3,stroke:'#333'})); };
-  const tw = (n,max) => Math.min(n*5.5+6, max);
-  function drawNodes(nodes, x, w, y) {
-    for (const n of nodes) { y = drawNode(n,x,w,y) + WF.GAP; }
-    return y;
+  const FONT = '"Comic Sans MS","Segoe Print","Bradley Hand",Chalkboard,cursive';
+  function txt(x,y,s,maxw,size,anchor,weight){
+    if(!s) return;
+    const fs = size||13.5;
+    const cap = Math.max(1, Math.floor(maxw/(fs*0.52)));
+    let str = String(s); if (str.length>cap) str = str.slice(0,Math.max(1,cap-1))+'…';
+    const t = document.createElementNS(SVG,'text');
+    t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('font-family',FONT);
+    t.setAttribute('font-size',fs); t.setAttribute('fill','#222');
+    t.setAttribute('dominant-baseline','middle');
+    if (anchor) t.setAttribute('text-anchor',anchor);
+    if (weight) t.setAttribute('font-weight','700');
+    t.textContent = str; g(t);
   }
+  function drawNodes(nodes, x, w, y) { for (const n of nodes) { y = drawNode(n,x,w,y) + WF.GAP; } return y; }
   function drawNode(n,x,w,y){
     const h = wfH(n);
-    if (n.t==='title'){ g(rc.rectangle(x,y,w,WF.TITLE-4,{...FM,fill:'#dcdce6',fillStyle:'hachure',hachureGap:5})); scrib(x+10,y+(WF.TITLE-4)/2,tw(n.n,w*0.55)); }
-    else if (n.t==='sub'){ scrib(x,y+WF.SUB/2,tw(n.n,w*0.45)); }
-    else if (n.t==='alert'){ g(rc.rectangle(x,y,w,WF.ALERT-4,{...FM,fill:'#f6dada',fillStyle:'hachure',hachureGap:6})); g(rc.line(x+3,y+3,x+3,y+WF.ALERT-7,{stroke:'#b03030',strokeWidth:5,roughness:1})); scrib(x+14,y+(WF.ALERT-4)/2,tw(8,w*0.6)); }
-    else if (n.t==='list'){ let yy=y; for(let k=0;k<n.items.length;k++){ g(rc.circle(x+5,yy+WF.LI/2,5,FM)); scrib(x+14,yy+WF.LI/2,tw(n.items[k],w-20)); yy+=WF.LI; } }
-    else if (n.t==='table'){ const R=n.rows.length||1, C=(n.rows[0]||['','']).length||2; g(rc.rectangle(x,y,w,R*WF.TR,FM)); for(let r=1;r<R;r++) g(rc.line(x,y+r*WF.TR,x+w,y+r*WF.TR,{roughness:1.8,strokeWidth:1.5,stroke:'#555'})); for(let c=1;c<C;c++) g(rc.line(x+c*w/C,y,x+c*w/C,y+R*WF.TR,{roughness:1.8,strokeWidth:1.5,stroke:'#555'})); for(let r=0;r<R;r++) scrib(x+8,y+r*WF.TR+WF.TR/2,tw(6,w/C-16)); }
+    if (n.t==='title'){ g(rc.rectangle(x,y,w,WF.TITLE-4,{...FM,fill:'#dadaea',fillStyle:'hachure',hachureGap:6})); txt(x+12,y+(WF.TITLE-4)/2,n.s,w-24,15,null,true); }
+    else if (n.t==='sub'){ txt(x+2,y+WF.SUB/2,n.s,w,13,null,true); }
+    else if (n.t==='alert'){ g(rc.rectangle(x,y,w,WF.ALERT-4,{...FM,fill:'#f6dada',fillStyle:'hachure',hachureGap:7})); g(rc.line(x+3,y+3,x+3,y+WF.ALERT-7,{stroke:'#b03030',strokeWidth:5,roughness:1})); txt(x+14,y+(WF.ALERT-4)/2,'⚠ '+(n.s||''),w-22,12.5); }
+    else if (n.t==='list'){ let yy=y; for(const it of n.items){ g(rc.circle(x+6,yy+WF.LI/2,5,FM)); txt(x+16,yy+WF.LI/2,it,w-22,13); yy+=WF.LI; } }
+    else if (n.t==='table'){ const R=n.rows.length||1, C=(n.rows[0]||['','']).length||2, cw=w/C; g(rc.rectangle(x,y,w,R*WF.TR,FM)); for(let r=1;r<R;r++) g(rc.line(x,y+r*WF.TR,x+w,y+r*WF.TR,{roughness:1.6,strokeWidth:1.4,stroke:'#666'})); for(let c=1;c<C;c++) g(rc.line(x+c*cw,y,x+c*cw,y+R*WF.TR,{roughness:1.6,strokeWidth:1.4,stroke:'#666'})); for(let r=0;r<R;r++) for(let c=0;c<(n.rows[r]||[]).length;c++) txt(x+c*cw+7,y+r*WF.TR+WF.TR/2,n.rows[r][c],cw-12,12.5,null,r===0); }
     else if (n.t==='row'){ const N=n.cells.length, cw=(w-(N-1)*WF.GAP)/N; for(let c=0;c<N;c++){ const cx=x+c*(cw+WF.GAP); g(rc.rectangle(cx,y,cw,WF.ROW-4,{...FM,strokeWidth:2})); drawInline(n.cells[c],cx+8,cw-16,y+(WF.ROW-4)/2,true); } }
-    else if (n.t==='line'){ if(n.items.some(it=>it.t==='chart')) drawChart(x,y,w); else drawInline(n.items,x,w,y+WF.LINE/2,false); }
-    else if (n.t==='card'){ const inner=wfMeasure(n.kids); g(rc.rectangle(x,y,w,h,{...FM,strokeWidth:2})); scrib(x+10,y+WF.CH/2,tw(8,w*0.5)); drawNodes(n.kids,x+WF.CPAD,w-WF.CPAD*2,y+WF.CH+WF.CPAD); }
+    else if (n.t==='line'){ if(n.items.some(it=>it.t==='chart')) drawChart(x,y,w,n.items.find(it=>it.t==='chart').s); else drawInline(n.items,x,w,y+WF.LINE/2,false); }
+    else if (n.t==='card'){ g(rc.rectangle(x,y,w,h,{...FM,strokeWidth:2})); txt(x+12,y+WF.CH/2,n.s,w-24,13.5,null,true); drawNodes(n.kids,x+WF.CPAD,w-WF.CPAD*2,y+WF.CH+WF.CPAD); }
     return y+h;
   }
-  function drawChart(x,y,w){ const hh=WF.CHART-10; g(rc.rectangle(x,y,w,hh,FM)); g(rc.line(x+10,y+hh-10,x+w-10,y+hh-10,{roughness:1.5,strokeWidth:2,stroke:'#555'})); g(rc.line(x+10,y+8,x+10,y+hh-10,{roughness:1.5,strokeWidth:2,stroke:'#555'})); const bw=(w-40)/4; for(let b=0;b<4;b++){ const bh=14+((b*37)%(hh-26)); g(rc.rectangle(x+18+b*bw,y+hh-10-bh,bw*0.6,bh,{...FM,strokeWidth:1.8,fill:'#cfcfe0',fillStyle:'hachure',hachureGap:4})); } }
+  function drawChart(x,y,w,cap){ const hh=WF.CHART-22; g(rc.rectangle(x,y,w,hh,FM)); g(rc.line(x+12,y+hh-10,x+w-10,y+hh-10,{roughness:1.4,strokeWidth:2,stroke:'#666'})); g(rc.line(x+12,y+8,x+12,y+hh-10,{roughness:1.4,strokeWidth:2,stroke:'#666'})); const bw=(w-44)/4; for(let b=0;b<4;b++){ const bh=12+((b*37)%(hh-26)); g(rc.rectangle(x+20+b*bw,y+hh-10-bh,bw*0.6,bh,{...FM,strokeWidth:1.6,fill:'#cfcfe6',fillStyle:'hachure',hachureGap:4})); } txt(x+w/2,y+hh+10,cap||'gráfico',w-16,12,'middle'); }
   function drawInline(items,x,w,cy,center){
-    // largura total estimada p/ centralizar
+    const onlyLabels = items.every(it=>it.t==='label');
+    if (center && onlyLabels){ txt(x+w/2,cy,items.map(it=>it.s).join(' '),w,13.5,'middle'); return; }
     let cur=x;
     for (const it of items){
-      if (it.t==='button'){ const bw=Math.min(it.n*7+24,w); g(rc.rectangle(cur,cy-12,bw,24,{...FM,strokeWidth:2})); scrib(cur+8,cy,bw-16); cur+=bw+8; }
-      else if (it.t==='input'){ const iw=Math.min(it.n*6+30,w); g(rc.rectangle(cur,cy-13,iw,26,{roughness:1.6,strokeWidth:2,stroke:'#333'})); scrib(cur+6,cy,Math.min(it.n*5,iw-12)); cur+=iw+8; }
+      const avail = x+w-cur;
+      if (it.t==='button'){ const bw=Math.min(it.s.length*8+22,Math.max(40,avail)); g(rc.rectangle(cur,cy-13,bw,26,{...FM,strokeWidth:2,fill:'#eef0f6',fillStyle:'solid'})); txt(cur+bw/2,cy,it.s,bw-12,12.5,'middle'); cur+=bw+8; }
+      else if (it.t==='input'){ const iw=Math.min(Math.max(it.s.length*8+30,90),avail); g(rc.rectangle(cur,cy-13,iw,26,{roughness:1.5,strokeWidth:2,stroke:'#444'})); txt(cur+7,cy,it.s,iw-12,12.5); cur+=iw+8; }
       else if (it.t==='chart'){ /* tratado em drawChart */ }
-      else { scrib(cur,cy,tw(it.n, x+w-cur)); cur += tw(it.n, x+w-cur)+8; }
+      else { txt(cur,cy,it.s,avail,13); cur += Math.min(it.s.length*7+8, avail); }
       if (cur > x+w-6) break;
     }
   }
   drawNodes(nodes, WF.PAD, W-WF.PAD*2, WF.PAD);
   return svg;
 }
-
 let mermaidSeq = 0;
 function renderDoc(id) {
   const doc = DOCS[id];

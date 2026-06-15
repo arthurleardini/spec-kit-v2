@@ -5,7 +5,7 @@ description: Use quando o usuário quer iniciar uma spec wikiLLM nova — criar 
 
 # spec-scaffold
 
-Cria a estrutura **FLAT** de um wiki wikiLLM novo para um produto: os arquivos-base do wiki (incluindo `visao.md` e `componentes.md` na raiz de `refined/`), a pasta `refined/Requisitos/` e o `CLAUDE.md` na raiz, a partir dos templates em `templates/wiki/` do spec-kit.
+Cria a estrutura **FLAT** de um wiki wikiLLM novo para um produto: os arquivos-base do wiki (incluindo `visao.md`, `componentes.md` e os **três documentos transversais** — `modelo-dados.md`, `requisitos-transversais.md`, `telas-comuns.md` — na raiz de `refined/`), a pasta `refined/Requisitos/` e o `CLAUDE.md` na raiz, a partir dos templates do spec-kit.
 
 É o **primeiro passo** de uso do kit — roda uma vez por produto, antes da skill `intencao-visao` ou de qualquer skill `contrato-*`.
 
@@ -30,21 +30,27 @@ Quando o usuário pede para começar uma spec nova, criar o wiki de um produto, 
    - `refined/overview.md` ← `templates/wiki/overview.md`
    - `refined/blueprint.md` ← `templates/contrato/blueprint.md` *(esqueleto; preenchido por `contrato-blueprint`)*
    - `<wiki>/CLAUDE.md` ← `templates/wiki/CLAUDE.md`
-4. Semear a Camada de Intenção e o ponteiro de componentes com os **esqueletos**, na
-   **raiz** de `refined/` (não preencher o conteúdo — isso é feito pelas skills geradoras):
+4. Semear a Camada de Intenção, o ponteiro de componentes e os **três transversais** com
+   os **esqueletos**, na **raiz** de `refined/` (não preencher o conteúdo — isso é feito
+   pelas skills geradoras):
    - `refined/visao.md` ← `templates/intencao/visao.md` (a Visão — 3 capítulos)
    - `refined/componentes.md` ← `templates/contrato/_componentes.md` (ponteiro fino: vocabulário genérico de componentes)
+   - `refined/modelo-dados.md` ← `templates/transversais/modelo-dados.md` (modelo de dados canônico — preenchido por `spec-transversais`)
+   - `refined/requisitos-transversais.md` ← `templates/transversais/requisitos-transversais.md` (`RNF-T-*`/`RF-T-*` — preenchido por `spec-transversais`)
+   - `refined/telas-comuns.md` ← `templates/transversais/telas-comuns.md` (arquétipos `A-NN` — preenchido por `spec-transversais`)
    - **Não** criar `Requisitos/<feature>.md` no scaffold — cada doc de requisitos é
      criado por feature (de `templates/contrato/contrato.md`) pelas skills `contrato-*`.
 5. Anexar a primeira entrada em `refined/log.md` (`## [YYYY-MM-DD] scaffold | wiki criado`).
 
 ## Mínimo vs. opcional
-- **Mínimo comum gerado pelo fluxo:** `visao.md` (3 caps) + `Requisitos/<feature>.md` por feature (4 caps) + `blueprint.md`.
+- **Mínimo comum gerado pelo fluxo:** `visao.md` (3 caps) + os 3 transversais (`modelo-dados.md`, `requisitos-transversais.md`, `telas-comuns.md`) + `Requisitos/<feature>.md` por feature (3 caps) + `blueprint.md`.
 - **Opcional** (só quando o projeto pedir): `_archive/`, princípios, capacidades-IA como doc dedicado, roadmap, métricas detalhadas.
 
 ## Saída
 - Estrutura FLAT criada: `refined/` com `index.md`, `log.md`, `overview.md`,
-  `blueprint.md`, `visao.md` e `componentes.md` na raiz, mais a pasta `refined/Requisitos/`
-  (vazia). Sem pastas `intencao/` ou `contracts/`.
-- `refined/index.md`, `refined/log.md`, `refined/overview.md`, `refined/blueprint.md`, `refined/visao.md`, `refined/componentes.md` e `<wiki>/CLAUDE.md` criados a partir dos templates, com o nome do produto e a data preenchidos.
-- O wiki pronto para receber a skill `intencao-visao` (e depois as `contrato-*`).
+  `blueprint.md`, `visao.md`, `componentes.md` e os três transversais (`modelo-dados.md`,
+  `requisitos-transversais.md`, `telas-comuns.md`) na raiz, mais a pasta `refined/Requisitos/`
+  (vazia). **Estrutura plana** — sem pastas `intencao/` ou `contracts/`; os transversais
+  ficam lado a lado com `visao.md`/`componentes.md` na raiz.
+- `refined/index.md`, `refined/log.md`, `refined/overview.md`, `refined/blueprint.md`, `refined/visao.md`, `refined/componentes.md`, `refined/modelo-dados.md`, `refined/requisitos-transversais.md`, `refined/telas-comuns.md` e `<wiki>/CLAUDE.md` criados a partir dos templates, com o nome do produto e a data preenchidos.
+- O wiki pronto para receber a skill `intencao-visao` (e depois `spec-transversais` e as `contrato-*`).

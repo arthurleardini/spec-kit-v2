@@ -16,11 +16,14 @@ A spec é organizada em duas camadas:
   capítulos: 1. Produto (visão, proposta de valor, personas, jobs), 2. Glossário do
   domínio, 3. Regras & Métricas.
 - **Camada de Requisitos** — *o que* o produto faz, feature a feature. Por feature, **um
-  único documento**, `refined/Requisitos/<feature>.md`, com 4 capítulos
-  (telas/fluxos, histórias, requisitos & cenários de teste, dados); mais o blueprint
-  product-level (cadeia de valor) e o **ponteiro fino de componentes**
-  (`refined/componentes.md`, na raiz) — um vocabulário genérico de front, não um catálogo
-  bespoke.
+  único documento**, `refined/Requisitos/<feature>.md`, com **3 capítulos**
+  (1. Telas & Fluxos, 2. Requisitos & Cenários de Teste — que absorve as personas &
+  objetivos, antes "Histórias", 3. Dados); mais o blueprint product-level (cadeia de valor)
+  e o **ponteiro fino de componentes** (`refined/componentes.md`, na raiz).
+- **Transversais** — o que é comum a várias features vive **uma vez**, na raiz de
+  `refined/`, e cada feature **referencia**: `modelo-dados.md` (modelo de dados canônico),
+  `requisitos-transversais.md` (`RNF-T-*`/`RF-T-*`) e `telas-comuns.md` (arquétipos de tela
+  `A-NN`). **Pense transversalmente, não por feature.**
 
 O resultado é um wiki em `refined/` — markdown com links relativos, IDs estáveis de
 cross-reference (`JTBD-NN`, `RN-NN`, …) e dois artefatos HTML navegáveis
@@ -33,6 +36,15 @@ Padronizar o **mínimo comum**; o resto é opcional por projeto. Menos conceitos
 robustos. Agentes mais **especialistas** gerando **menos artefatos**. Linguagem de
 produto **agnóstica** mantida.
 
+**Transversal-first** — modelo de dados, telas e requisitos são pensados
+**transversalmente** (um modelo de dados canônico, um catálogo de arquétipos de tela, um
+conjunto de `RNF-T-*`/`RF-T-*`), **não duplicados por feature**. Cada feature referencia
+esses transversais e descreve só o que é específico.
+
+**Minimizar telas** — favorecer **menos telas e menos complexidade**: reusar os arquétipos
+de `telas-comuns.md` e **fundir vistas em abas/drawers/painéis laterais** em vez de
+multiplicar telas; cada tela é etiquetada com seu arquétipo.
+
 ## Mínimo comum vs. Opcional
 
 A spec mínima de qualquer produto é composta por **três artefatos**:
@@ -40,9 +52,11 @@ A spec mínima de qualquer produto é composta por **três artefatos**:
 - **Mínimo comum**
   - `refined/visao.md` — a Visão (na raiz), com os 3 capítulos (Produto, Glossário,
     Regras & Métricas).
-  - `refined/Requisitos/<feature>.md` — um doc por feature, com os 4
-    capítulos (Telas & Fluxos, Histórias, Requisitos & Cenários de Teste, Dados). As
-    histórias **não** levam critérios de aceite — a prova vive nos cenários do Cap. 3.3.
+  - Os **3 transversais** (na raiz): `modelo-dados.md` (modelo de dados canônico),
+    `requisitos-transversais.md` (`RNF-T-*`/`RF-T-*`) e `telas-comuns.md` (arquétipos `A-NN`).
+  - `refined/Requisitos/<feature>.md` — um doc por feature, com os **3 capítulos**
+    (1. Telas & Fluxos, 2. Requisitos & Cenários de Teste, 3. Dados). A intenção do usuário
+    (persona → objetivo) vive na §2.1; **não há mais capítulo de Histórias**.
   - `refined/blueprint.md` — blueprint product-level (cadeia de valor).
 - **Opcional** (só quando o projeto pedir; não gerado por padrão)
   - Princípios de produto (`PR-NN`).
@@ -84,9 +98,13 @@ não um `raw/`/`trusted/` não muda o fluxo.
    resolver as perguntas acionáveis antes de avançar.
 4. **Camada de Requisitos** — por feature, definir o `eixo` (`processo` ou `classe`) e
    rodar as skills `contrato-*`: cada uma escreve um **capítulo** do
-   `Requisitos/<feature>.md` da feature (telas/fluxos com Mermaid, histórias, requisitos &
-   cenários de teste, dados derivados). Rodar também `contrato-blueprint` para o
-   blueprint product-level.
+   `Requisitos/<feature>.md` da feature (telas/fluxos com Mermaid + arquétipo por tela;
+   requisitos & cenários de teste com personas & objetivos; dados derivados que referenciam
+   o modelo transversal). Rodar também `contrato-blueprint` para o blueprint product-level.
+   - **`spec-transversais`** — gerar/manter os 3 docs transversais (`modelo-dados.md`,
+     `requisitos-transversais.md`, `telas-comuns.md`) varrendo as features (extrai entidades
+     canônicas, requisitos comuns e arquétipos de tela) e **emagrecer** os docs de feature
+     para apenas referenciá-los. Rodar à medida que as features surgem.
 5. **`spec-navigator`** — rodar os scripts para gerar `refined-navigator.html` e
    `refined/blueprint.html`. Repetir após qualquer mudança no wiki.
 6. **`spec-to-html`** — gerar um protótipo HTML navegável das telas a partir da
@@ -99,14 +117,14 @@ não um `raw/`/`trusted/` não muda o fluxo.
 ## Eixo de granularidade do contrato
 
 Cada `Requisitos/<feature>.md` traz no frontmatter `eixo: processo | classe`, que orienta o Cap. 1
-(Mermaid) e o Cap. 4 (Dados):
+(Mermaid) e o Cap. 3 (Dados):
 
 - **`processo`** — fluxo/atividades. A 1.1 funde fluxo e processo num único flowchart
-  (estilo BPMN leve), além do Mermaid de navegação entre telas (1.3). Os dados do Cap. 4
-  **derivam** das atividades.
+  (estilo BPMN leve), além do Mermaid de navegação entre telas (1.3). Os dados do Cap. 3
+  **derivam** das atividades (referenciando o `modelo-dados.md` transversal).
 - **`classe`** — formulários/objetos. A 1.1 é um flowchart simples do ciclo do
   formulário/registro; cada formulário ≈ uma classe; a classe já é o modelo de dados do
-  Cap. 4.
+  Cap. 3.
 
 ## Mermaid
 
@@ -115,6 +133,7 @@ Blocos ` ```mermaid ` embutidos no markdown são renderizados no navegador:
 - Contrato Cap. 1.1 — fluxo (processo, se `eixo=processo`; ciclo do formulário, se
   `eixo=classe`).
 - Contrato Cap. 1.3 — navegação entre telas (sempre). **Não** há subseção 1.4 separada.
+- Transversal `modelo-dados.md` — `erDiagram` do modelo de dados canônico (sempre).
 - Visão Cap. 1 — jornada macro (opcional).
 
 ## Wireframe nas telas + vocabulário de componentes
@@ -138,21 +157,24 @@ DSL → componente: `docs/CONVENCOES-V2.md`.
 | --- | --- |
 | `intencao-visao` | Produz e mantém o documento único `visao.md` (a Visão, na raiz) — os 3 capítulos: Produto/Personas/Jobs, Glossário do domínio, Regras & Métricas. Especialista; adiciona seções opcionais (princípios, capacidades-IA, roadmap) só quando pedido. |
 
-### Camada de Requisitos (5)
+### Camada de Requisitos (4)
 
 | Skill | O que faz |
 | --- | --- |
-| `contrato-telas-fluxos` | Escreve o **Cap. 1 (Telas & Fluxos)** do `Requisitos/<feature>.md` da feature, com Mermaid de fluxo (1.1) e de navegação (1.3). |
-| `contrato-historias` | Escreve o **Cap. 2 (Histórias)** — `US-NN`. |
-| `contrato-requisitos` | Escreve o **Cap. 3 (Requisitos & Cenários de Teste)** — `RF-NN`, `RNF-*` + cenários de teste (Gherkin-like). |
-| `contrato-dados` | Escreve o **Cap. 4 (Dados)** — modelo derivado (da classe, se `eixo=classe`; das atividades, se `eixo=processo`). |
+| `contrato-telas-fluxos` | Escreve o **Cap. 1 (Telas & Fluxos)** do `Requisitos/<feature>.md` da feature, com Mermaid de fluxo (1.1) e de navegação (1.3); etiqueta cada tela com seu arquétipo (`A-NN` de `telas-comuns.md`) e minimiza telas (reusa arquétipos, funde vistas em abas/drawers). |
+| `contrato-requisitos` | Escreve o **Cap. 2 (Requisitos & Cenários de Teste)** — `2.1 Personas & objetivos` (a intenção do usuário, antes "Histórias"), `RF-NN`, `RNF-*` + cenários de teste (Gherkin-like). Cita os transversais (`RNF-T-*`/`RF-T-*`) por ID. |
+| `contrato-dados` | Escreve o **Cap. 3 (Dados)** — referencia o `modelo-dados.md` transversal e descreve só o que é próprio; modelo derivado (da classe, se `eixo=classe`; das atividades, se `eixo=processo`). |
 | `contrato-blueprint` | Blueprint product-level — features na cadeia de valor (inalterado). |
 
-### Operacionais (5)
+> ~~`contrato-historias`~~ foi **removida**: Histórias e Requisitos eram redundantes; a
+> intenção do usuário agora vive na §2.1 (Personas & objetivos) dentro de Requisitos.
+
+### Operacionais (6)
 
 | Skill | O que faz |
 | --- | --- |
-| `spec-scaffold` | Cria a estrutura de um wiki wikiLLM novo. Primeiro passo de uso do kit. |
+| `spec-scaffold` | Cria a estrutura de um wiki wikiLLM novo (incl. os 3 transversais na raiz). Primeiro passo de uso do kit. |
+| `spec-transversais` | Gera/mantém os 3 docs transversais (`modelo-dados.md`, `requisitos-transversais.md`, `telas-comuns.md`) varrendo as features, e emagrece os docs de feature para apenas referenciá-los. |
 | `spec-audit` | Auditoria CSD — levanta Certezas, Suposições e Dúvidas como perguntas acionáveis. |
 | `spec-lint` | Health-check do wiki — links quebrados, páginas órfãs, lacunas, páginas sem `## Relacionado`. |
 | `spec-navigator` | Roda os scripts que (re)geram `refined-navigator.html` e `refined/blueprint.html`. |
@@ -178,8 +200,11 @@ refined/
   index.md  log.md  overview.md  blueprint.md   # 4 mds da wiki
   visao.md                         # a Visão — 3 capítulos (mínimo) — na raiz
   componentes.md                   # ponteiro fino: vocabulário genérico de componentes — na raiz
+  modelo-dados.md                  # transversal: modelo de dados canônico — na raiz
+  requisitos-transversais.md       # transversal: RNF-T-* / RF-T-* — na raiz
+  telas-comuns.md                  # transversal: arquétipos de tela A-NN — na raiz
   Requisitos/
-    <feature>.md                   # 1 doc por feature — 4 capítulos (mínimo)
+    <feature>.md                   # 1 doc por feature — 3 capítulos (mínimo)
   _archive/                        # artefatos obsoletos (opcional)
 ```
 
@@ -193,11 +218,12 @@ Em `scripts/` — utilitários Python (3.11) que geram os artefatos navegáveis 
 do `refined/`. `<wiki>` é o diretório que contém `refined/`.
 
 - **`scripts/build-navigator.py <wiki>`** — varre a Camada de Intenção
-  (`visao.md`) e a Camada de Requisitos (`Requisitos/<feature>.md`) e
-  embute todo o conteúdo num único `refined-navigator.html`, que abre com duplo-clique
-  (sem servidor). Diagramas Mermaid embutidos são renderizados. Se existir
-  `refined/blueprint.md`, ele é renderizado como uma tela de cadeia de valor dentro do
-  navegador. Rodar: `python3 scripts/build-navigator.py <wiki>`. O navegador sai no
+  (`visao.md`), os **transversais** (`modelo-dados.md`, `requisitos-transversais.md`,
+  `telas-comuns.md`, `componentes.md` — agrupados sob o submenu **Transversais**) e a Camada
+  de Requisitos (`Requisitos/<feature>.md`) e embute todo o conteúdo num único
+  `refined-navigator.html`, que abre com duplo-clique (sem servidor). Diagramas Mermaid
+  embutidos são renderizados. Se existir `refined/blueprint.md`, ele é renderizado como uma
+  tela de cadeia de valor dentro do navegador. Rodar: `python3 scripts/build-navigator.py <wiki>`. O navegador sai no
   padrão visual EloGroup (azul institucional, fontes Outfit/Roboto Mono e logotipo
   embutidos).
 

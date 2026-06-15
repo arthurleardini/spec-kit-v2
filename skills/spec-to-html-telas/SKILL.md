@@ -18,7 +18,7 @@ Depois que `spec-to-html-scaffold` escreveu o esqueleto do protótipo.
 ## Entrada
 - A tabela de telas validada em `spec-to-html-plano`.
 - Por tela, a subseção `### 1.2 Telas detalhadas` do Cap. 1 do `Requisitos/<feature>.md` da feature-fonte.
-- O catálogo `refined/componentes.md` para os blocos de UI referenciados.
+- O ponteiro `refined/componentes.md` para os componentes genéricos referenciados (campo **Componentes:** + bloco ` ```wireframe ` de cada tela).
 
 ## Processo
 1. Para cada linha da tabela de telas, criar `screens/NN-nome.html` — `NN` é a ordem
@@ -26,7 +26,8 @@ Depois que `spec-to-html-scaffold` escreveu o esqueleto do protótipo.
 2. Cada tela é uma
    `<section class="screen" id="tela-x" data-title="..." data-grupo="...">`,
    construída a partir da subseção `### 1.2 Telas detalhadas` da feature-fonte: objetivo,
-   conteúdo, ações, estados, navegação e blocos referenciados (puxados de
+   conteúdo, ações, estados, navegação, o bloco ` ```wireframe ` e os componentes
+   referenciados pelo nome genérico (campo **Componentes:**, vocabulário em
    `componentes.md`).
 3. Convenções de markup:
    - navegação entre telas: `onclick="show('tela-x')"` em cards, botões e links;

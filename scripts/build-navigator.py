@@ -134,6 +134,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
 <style>
   :root {
     --bg: #F9F9F9; --panel: #FFFFFF; --ink: #272727; --muted: #6B6E7A;
@@ -235,6 +236,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .mermaid { background: var(--panel); border: 1px solid var(--line); border-radius: 9px;
              padding: 14px; margin: 1em 0; text-align: center; overflow-x: auto; }
   .mermaid-err { color: #b04a3a; font-size: 12px; }
+  .wireframe { background: #fff; border: 1px solid var(--line); border-radius: 9px;
+               padding: 10px; margin: 1em 0; overflow-x: auto; }
+  .wireframe svg { display: block; }
+  body.dark .wireframe { background: #f7f7fa; }
   mark { background: var(--hl); color: inherit; padding: 0 2px; border-radius: 3px; }
 
   .empty { color: var(--muted); padding: 60px 38px; text-align: center; }
@@ -396,6 +401,114 @@ function dbmlToMermaid(dbml) {
 }
 
 /* ---------- Render ---------- */
+/* ---------- Wireframe fat-marker (parser + render, só layout, sem texto) ---------- */
+function parseInline(text) {
+  const re = /\[~[^\]]*~\]|\[[^\]]*?_{2,}\]|\[[^\]]+\]|[^\[]+/g;
+  const out = []; let m;
+  while ((m = re.exec(text)) !== null) {
+    const t = m[0].trim(); if (!t) continue;
+    if (/^\[~.*~\]$/.test(t)) out.push({t:'chart'});
+    else if (/^\[.*_{2,}\]$/.test(t)) out.push({t:'input', n:t.replace(/[\[\]_]/g,'').length});
+    else if (/^\[.+\]$/.test(t)) out.push({t:'button', n:t.slice(1,-1).trim().length});
+    else out.push({t:'label', n:t.length});
+  }
+  return out;
+}
+function parseWireframe(src) {
+  const lines = src.replace(/\t/g,'  ').split('\n');
+  let i = 0;
+  function indentOf(s){ return s.match(/^ */)[0].length; }
+  function block(minIndent) {
+    const nodes = [];
+    while (i < lines.length) {
+      const raw = lines[i];
+      if (raw.trim() === '') { i++; continue; }
+      const ind = indentOf(raw);
+      if (ind < minIndent) break;
+      const s = raw.trim();
+      let mm;
+      if ((mm = s.match(/^card\s+"?(.*?)"?:$/))) { i++; const kids = block(ind+1); nodes.push({t:'card', kids}); continue; }
+      if (s[0] === '|') {
+        const rows = [];
+        while (i < lines.length && lines[i].trim()[0] === '|') {
+          const cells = lines[i].trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+          if (!cells.every(c=>/^[-:]+$/.test(c))) rows.push(cells);
+          i++;
+        }
+        nodes.push({t:'table', rows}); continue;
+      }
+      if (s.startsWith('- ')) {
+        const items = [];
+        while (i < lines.length && lines[i].trim().startsWith('- ')) { items.push(lines[i].trim().slice(2).length); i++; }
+        nodes.push({t:'list', items}); continue;
+      }
+      i++;
+      if (s.startsWith('# ')) nodes.push({t:'title', n:s.slice(2).length});
+      else if (s.startsWith('## ')) nodes.push({t:'sub', n:s.slice(3).length});
+      else if ((mm = s.match(/^\[\[(.+)\]\]$/))) nodes.push({t:'row', cells: mm[1].split('|').map(c=>parseInline(c.trim()))});
+      else if (s.startsWith('(!)')) nodes.push({t:'alert'});
+      else nodes.push({t:'line', items: parseInline(s)});
+    }
+    return nodes;
+  }
+  return block(0);
+}
+const WF = {W:540, PAD:12, GAP:8, TITLE:34, SUB:22, ROW:52, LINE:34, CHART:74, ALERT:32, LI:20, TR:26, CH:22, CPAD:8};
+function wfMeasure(nodes) { let h=0; for (const n of nodes) h += wfH(n) + WF.GAP; return h; }
+function wfH(n) {
+  switch(n.t){
+    case 'title': return WF.TITLE; case 'sub': return WF.SUB; case 'row': return WF.ROW;
+    case 'alert': return WF.ALERT; case 'list': return Math.max(1,n.items.length)*WF.LI;
+    case 'table': return Math.max(1,n.rows.length)*WF.TR;
+    case 'line': return n.items.some(x=>x.t==='chart') ? WF.CHART : WF.LINE;
+    case 'card': return WF.CH + WF.CPAD*2 + wfMeasure(n.kids);
+    default: return WF.LINE;
+  }
+}
+function renderWireframe(src) {
+  const SVG='http://www.w3.org/2000/svg';
+  const nodes = parseWireframe(src);
+  const W = WF.W, total = wfMeasure(nodes) + WF.PAD*2;
+  const svg = document.createElementNS(SVG,'svg');
+  svg.setAttribute('viewBox','0 0 '+W+' '+total);
+  svg.setAttribute('width','100%'); svg.setAttribute('style','max-width:'+W+'px;height:auto');
+  const rc = rough.svg(svg);
+  const FM = {roughness:2.2, strokeWidth:2.4, stroke:'#222'};
+  const g = el => svg.appendChild(el);
+  const scrib = (x,y,w) => { if(w>4) g(rc.line(x,y,x+Math.min(w,9999),y,{roughness:2.6,strokeWidth:3,stroke:'#333'})); };
+  const tw = (n,max) => Math.min(n*5.5+6, max);
+  function drawNodes(nodes, x, w, y) {
+    for (const n of nodes) { y = drawNode(n,x,w,y) + WF.GAP; }
+    return y;
+  }
+  function drawNode(n,x,w,y){
+    const h = wfH(n);
+    if (n.t==='title'){ g(rc.rectangle(x,y,w,WF.TITLE-4,{...FM,fill:'#dcdce6',fillStyle:'hachure',hachureGap:5})); scrib(x+10,y+(WF.TITLE-4)/2,tw(n.n,w*0.55)); }
+    else if (n.t==='sub'){ scrib(x,y+WF.SUB/2,tw(n.n,w*0.45)); }
+    else if (n.t==='alert'){ g(rc.rectangle(x,y,w,WF.ALERT-4,{...FM,fill:'#f6dada',fillStyle:'hachure',hachureGap:6})); g(rc.line(x+3,y+3,x+3,y+WF.ALERT-7,{stroke:'#b03030',strokeWidth:5,roughness:1})); scrib(x+14,y+(WF.ALERT-4)/2,tw(8,w*0.6)); }
+    else if (n.t==='list'){ let yy=y; for(let k=0;k<n.items.length;k++){ g(rc.circle(x+5,yy+WF.LI/2,5,FM)); scrib(x+14,yy+WF.LI/2,tw(n.items[k],w-20)); yy+=WF.LI; } }
+    else if (n.t==='table'){ const R=n.rows.length||1, C=(n.rows[0]||['','']).length||2; g(rc.rectangle(x,y,w,R*WF.TR,FM)); for(let r=1;r<R;r++) g(rc.line(x,y+r*WF.TR,x+w,y+r*WF.TR,{roughness:1.8,strokeWidth:1.5,stroke:'#555'})); for(let c=1;c<C;c++) g(rc.line(x+c*w/C,y,x+c*w/C,y+R*WF.TR,{roughness:1.8,strokeWidth:1.5,stroke:'#555'})); for(let r=0;r<R;r++) scrib(x+8,y+r*WF.TR+WF.TR/2,tw(6,w/C-16)); }
+    else if (n.t==='row'){ const N=n.cells.length, cw=(w-(N-1)*WF.GAP)/N; for(let c=0;c<N;c++){ const cx=x+c*(cw+WF.GAP); g(rc.rectangle(cx,y,cw,WF.ROW-4,{...FM,strokeWidth:2})); drawInline(n.cells[c],cx+8,cw-16,y+(WF.ROW-4)/2,true); } }
+    else if (n.t==='line'){ if(n.items.some(it=>it.t==='chart')) drawChart(x,y,w); else drawInline(n.items,x,w,y+WF.LINE/2,false); }
+    else if (n.t==='card'){ const inner=wfMeasure(n.kids); g(rc.rectangle(x,y,w,h,{...FM,strokeWidth:2})); scrib(x+10,y+WF.CH/2,tw(8,w*0.5)); drawNodes(n.kids,x+WF.CPAD,w-WF.CPAD*2,y+WF.CH+WF.CPAD); }
+    return y+h;
+  }
+  function drawChart(x,y,w){ const hh=WF.CHART-10; g(rc.rectangle(x,y,w,hh,FM)); g(rc.line(x+10,y+hh-10,x+w-10,y+hh-10,{roughness:1.5,strokeWidth:2,stroke:'#555'})); g(rc.line(x+10,y+8,x+10,y+hh-10,{roughness:1.5,strokeWidth:2,stroke:'#555'})); const bw=(w-40)/4; for(let b=0;b<4;b++){ const bh=14+((b*37)%(hh-26)); g(rc.rectangle(x+18+b*bw,y+hh-10-bh,bw*0.6,bh,{...FM,strokeWidth:1.8,fill:'#cfcfe0',fillStyle:'hachure',hachureGap:4})); } }
+  function drawInline(items,x,w,cy,center){
+    // largura total estimada p/ centralizar
+    let cur=x;
+    for (const it of items){
+      if (it.t==='button'){ const bw=Math.min(it.n*7+24,w); g(rc.rectangle(cur,cy-12,bw,24,{...FM,strokeWidth:2})); scrib(cur+8,cy,bw-16); cur+=bw+8; }
+      else if (it.t==='input'){ const iw=Math.min(it.n*6+30,w); g(rc.rectangle(cur,cy-13,iw,26,{roughness:1.6,strokeWidth:2,stroke:'#333'})); scrib(cur+6,cy,Math.min(it.n*5,iw-12)); cur+=iw+8; }
+      else if (it.t==='chart'){ /* tratado em drawChart */ }
+      else { scrib(cur,cy,tw(it.n, x+w-cur)); cur += tw(it.n, x+w-cur)+8; }
+      if (cur > x+w-6) break;
+    }
+  }
+  drawNodes(nodes, WF.PAD, W-WF.PAD*2, WF.PAD);
+  return svg;
+}
+
 let mermaidSeq = 0;
 function renderDoc(id) {
   const doc = DOCS[id];
@@ -410,10 +523,17 @@ function renderDoc(id) {
   const wrap = document.createElement('div');
   wrap.innerHTML = html;
 
-  // converter blocos de código mermaid / dbml
+  // converter blocos de código mermaid / dbml / wireframe
   wrap.querySelectorAll('pre > code').forEach(code => {
     const cls = code.className || '';
     const txt = code.textContent;
+    if (/language-wireframe/.test(cls)) {
+      const div = document.createElement('div');
+      div.className = 'wireframe';
+      div.dataset.src = txt;
+      code.parentElement.replaceWith(div);
+      return;
+    }
     let diagram = null;
     if (/language-mermaid/.test(cls)) diagram = txt;
     else if (/language-dbml/.test(cls)) diagram = dbmlToMermaid(txt);
@@ -443,6 +563,12 @@ function renderDoc(id) {
       div.innerHTML = '<div class="mermaid-err">⚠ Não foi possível renderizar o diagrama</div>' +
         '<pre><code>' + src.replace(/</g, '&lt;') + '</code></pre>';
     }
+  });
+
+  // renderizar wireframes (fat marker, só layout, sem texto)
+  wrap.querySelectorAll('.wireframe').forEach(div => {
+    try { div.replaceChildren(renderWireframe(div.dataset.src)); }
+    catch (e) { div.innerHTML = '<div class="mermaid-err">⚠ wireframe inválido</div>'; }
   });
 
   buildToc(wrap);

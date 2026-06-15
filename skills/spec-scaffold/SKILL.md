@@ -30,10 +30,10 @@ Quando o usuário pede para começar uma spec nova, criar o wiki de um produto, 
    - `refined/overview.md` ← `templates/wiki/overview.md`
    - `refined/blueprint.md` ← `templates/contrato/blueprint.md` *(esqueleto; preenchido por `contrato-blueprint`)*
    - `<wiki>/CLAUDE.md` ← `templates/wiki/CLAUDE.md`
-4. Semear a Camada de Intenção e o catálogo de componentes com os **esqueletos**, na
+4. Semear a Camada de Intenção e o ponteiro de componentes com os **esqueletos**, na
    **raiz** de `refined/` (não preencher o conteúdo — isso é feito pelas skills geradoras):
    - `refined/visao.md` ← `templates/intencao/visao.md` (a Visão — 3 capítulos)
-   - `refined/componentes.md` ← `templates/contrato/_componentes.md` (catálogo de componentes)
+   - `refined/componentes.md` ← `templates/contrato/_componentes.md` (ponteiro fino: vocabulário genérico de componentes)
    - **Não** criar `Requisitos/<feature>.md` no scaffold — cada doc de requisitos é
      criado por feature (de `templates/contrato/contrato.md`) pelas skills `contrato-*`.
 5. Anexar a primeira entrada em `refined/log.md` (`## [YYYY-MM-DD] scaffold | wiki criado`).

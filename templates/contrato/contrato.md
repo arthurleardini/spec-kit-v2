@@ -31,6 +31,23 @@ fontes:
 
 ## 1. Telas & Fluxos
 
+> **Wireframe por tela (DSL `wireframe`):** cada tela do 1.2 traz um bloco
+> ` ```wireframe ` que esboça o layout. O render do navegador é **fat marker, só-layout**:
+> mostra apenas formas (sem texto legível) — os rótulos que você escreve servem ao autor
+> e à prosa. A DSL é line-based (de cima p/ baixo, stack vertical; 2 espaços indentam
+> dentro de um `card`):
+> - `# Texto` → barra de título (toolbar) · `## Texto` → subtítulo.
+> - `[[ a | b | c ]]` → linha de N colunas iguais.
+> - `card "Título":` + linhas indentadas (2 espaços) → card/região com filhos.
+> - `[Rótulo____]` (≥2 underscores finais) → input · `[~ legenda ~]` → gráfico (chart).
+> - `[Texto]` (curto, sem underscores) → botão.
+> - `(!) texto` → alerta/banner · `- item` → item de lista.
+> - `| a | b |` (linhas consecutivas) → tabela (1ª linha = cabeçalho) · texto livre → label.
+>
+> **Componentes** usam um **vocabulário genérico de front** (toolbar, card, table, list,
+> button, input, select, slider, tabs, dialog, chart…), agnóstico de framework. Cada
+> projeto mapeia esses nomes p/ sua lib concreta — ver `../componentes.md`.
+
 ### 1.1 Fluxo (Mermaid)
 Flowchart Mermaid do fluxo da feature, agnóstico de UI. **Para `eixo=processo`**, este flowchart funde fluxo e processo (estilo BPMN leve): atividades e informações como nós, gateways de decisão como losangos, do gatilho às saídas — **não** há subseção 1.4 separada. **Para `eixo=classe`**, é um flowchart simples do ciclo do formulário/registro (criar → validar → salvar → editar). Nós = `<informação> → <ação> → <resultado>`; `{}` = decisões; `([])` = gatilho/saídas.
 
@@ -51,11 +68,20 @@ Para cada tela, uma subseção:
 
 #### <id da tela> — <nome>
 - **Objetivo:** <para que serve>
+
+```wireframe
+# <nome da tela>
+[[ resumo A | resumo B | status ]]
+[~ gráfico principal ~]
+(!) <alerta, se houver>
+[Ação primária] [Ação secundária]
+```
+
 - **Conteúdo:** <que informação exibe>
 - **Ações:** <o que o usuário pode fazer>
 - **Estados:** <vazio, carregando, erro, sucesso — os aplicáveis>
 - **Navegação:** <de onde chega, para onde vai>
-- **Blocos:** <blocos referenciados de ../componentes.md>
+- **Componentes:** <nomes genéricos referenciados de ../componentes.md — ex.: toolbar, card, table, list, button, input, chart>
 
 ### 1.3 Diagrama de navegação (Mermaid) — obrigatório
 Diagrama de navegação entre as telas do Cap. 1.2. Cada nó é uma tela (use o `<id da tela>`); cada aresta é uma transição rotulada com a ação que a dispara.
@@ -173,6 +199,6 @@ Para cada história, uma subseção. As User Stories **não** levam critérios d
 
 ## Relacionado
 - [Visão do produto](../visao.md)
-- [Catálogo de componentes](../componentes.md)
+- [Vocabulário de componentes](../componentes.md)
 - [Outra feature](<feature>.md) <!-- mesma pasta Requisitos/ -->
 - [Índice do wiki](../index.md)

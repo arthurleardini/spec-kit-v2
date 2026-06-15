@@ -49,6 +49,46 @@ Blocos ` ```mermaid ` embutidos no markdown:
 - Visão Cap. 1 (jornada macro) — opcional.
 O `scripts/build-navigator.py` deve **renderizar Mermaid** no HTML (incluir mermaid.js, inicializar nos blocos ` ```mermaid `).
 
+## Wireframe nas telas (DSL)
+
+Cada tela `T-NN` (Cap. 1.2 de `Requisitos/<feature>.md`) traz, logo após **Objetivo**, um
+bloco ` ```wireframe ` que esboça o layout. O `build-navigator.py` renderiza esse bloco como
+um SVG **fat marker, só-layout** (parser próprio + rough.js inline, offline): mostra apenas
+as **formas** — sem texto legível. Os rótulos escritos na DSL servem ao autor e à prosa; o
+renderer os converte em rabisco de marcador, nunca em texto.
+
+**Gramática** (line-based, de cima p/ baixo num stack vertical; 2 espaços indentam dentro de
+um `card`):
+
+| Sintaxe | Nó | Componente genérico |
+|---|---|---|
+| `# Texto` | barra de título (largura total) | toolbar |
+| `## Texto` | subtítulo / cabeçalho de seção | — |
+| `[[ a \| b \| c ]]` | linha de N células iguais | grid / card row |
+| `card "Título":` + linhas indentadas | card/região com filhos | card |
+| `[Rótulo____]` (≥2 underscores finais) | input | input / form-field |
+| `[~ legenda ~]` | placeholder de gráfico | chart |
+| `[Texto]` (1+ por linha, sem underscores) | botão(ões) | button |
+| `(!) texto` | alerta/banner | banner |
+| `- item` | item de lista (linhas `-` consecutivas = uma lista) | list |
+| `\| a \| b \|` (linhas consecutivas) | tabela; 1ª linha = cabeçalho | table |
+| `texto` (livre) | label/parágrafo | — |
+| linha em branco | espaçamento vertical | — |
+
+Desambiguação: `[token]` sem `____`/`~` → botão; `[token____]` → input; `[~...~]` → gráfico;
+`[[ ... | ... ]]` é a única linha multi-coluna; card só via `card "...":` + indentação
+(não há `[box]` genérico, p/ evitar ambiguidade com botão).
+
+### Vocabulário genérico de componentes
+
+`componentes.md` (na raiz de `refined/`) é um **ponteiro fino**: um vocabulário **genérico
+de front-end**, agnóstico de framework — os componentes comuns que se repetem (button,
+slider, input, select, table, list, card, tabs, dialog, toolbar, chart…). As telas citam o
+componente pelo **nome genérico** (campo **Componentes:**, que substitui o antigo `Blocos:`);
+cada projeto **mapeia** p/ a sua lib concreta (Material Angular, MUI, shadcn/ui, HTML
+nativo — só exemplos; conjunto canônico de referência:
+https://material.angular.dev/components/categories). **Não** há catálogo bespoke de blocos.
+
 ## Mudança 4 — Mínimo vs Opcional (BL-01)
 
 Marcar explicitamente em README, `spec-scaffold` e `templates/wiki/CLAUDE.md`:

@@ -7,7 +7,7 @@ description: Use quando o usuário quer gerar ou revisar as Telas e Fluxos (Cap.
 
 Escreve e mantém o **Capítulo 1 — Telas & Fluxos** do documento único `refined/Requisitos/<feature>.md` da Camada de Requisitos. Não cria arquivo solto: o doc de requisitos de cada feature é **um só** (4 capítulos); esta skill é dona do Cap. 1.
 
-Responde à pergunta-mãe *Como o usuário interage com a feature?* — descreve o fluxo da feature em termos de informação e ações (agnóstico de UI), detalha cada tela e **emite um diagrama Mermaid de navegação** (BL-21). Também mantém o catálogo product-level de blocos de UI reutilizáveis.
+Responde à pergunta-mãe *Como o usuário interage com a feature?* — descreve o fluxo da feature em termos de informação e ações (agnóstico de UI), detalha cada tela (com **wireframe fat-marker** na DSL `wireframe`) e **emite um diagrama Mermaid de navegação** (BL-21). Também mantém o ponteiro fino de vocabulário de componentes em `componentes.md`.
 
 **Regra de não-sobreposição** (ver bloco-intro do `Requisitos/<feature>.md`): cada fato mora em UM lugar. Telas/fluxo são deste capítulo; não repetir aqui jornada da persona (Cap. 2), o que o sistema deve fazer (Cap. 3.1 RF) nem critérios de prova (Cap. 3.3 Cenários).
 
@@ -26,12 +26,44 @@ A Camada de Intenção consolidada em `refined/visao.md` (produto, personas, job
 1. Ler `refined/visao.md` e a fonte da feature. Determinar/confirmar o `eixo`.
 2. Abrir (ou criar a partir de `templates/contrato/contrato.md`) o `refined/Requisitos/<feature>.md` e preencher o **Cap. 1 — Telas & Fluxos**, sem tocar nos Caps. 2–4:
    - **1.1 Fluxo (Mermaid):** um flowchart Mermaid (não prosa em bullets). Nós = `<informação> → <ação> → <resultado>`; `{ }` = decisões; `([ ])` = gatilho/saídas; mais **uma** linha de legenda. Se `eixo=processo`, este flowchart funde fluxo e processo (BPMN leve, gatilho → atividades → saídas); se `eixo=classe`, é o ciclo simples do formulário/registro.
-   - **1.2 Telas detalhadas:** uma subseção por tela, com objetivo, conteúdo, ações, estados, navegação e os blocos referenciados.
+   - **1.2 Telas detalhadas:** uma subseção por tela, com objetivo, conteúdo, ações, estados, navegação. **Para cada tela `T-NN`:** logo após **Objetivo**, gerar um bloco ` ```wireframe ` (DSL abaixo) representando o layout, e a linha **Componentes:** listando nomes genéricos (toolbar, card, table, list, button, input, chart…).
    - **1.3 Diagrama de navegação (Mermaid):** **obrigatório**. Bloco ` ```mermaid ` com `flowchart`; cada nó é uma tela (usar o `<id da tela>` do 1.2), cada aresta é uma transição rotulada com a ação que a dispara.
-3. Manter o catálogo product-level `refined/componentes.md` (template `templates/contrato/_componentes.md`): ao identificar um bloco de UI que se repete entre telas/features, adicionar ou atualizar a subseção correspondente. O catálogo fica na **raiz** de `refined/`. As telas do 1.2 referenciam estes blocos por nome (campo **Blocos:**) em vez de redescrevê-los.
+3. Manter o ponteiro fino `refined/componentes.md` (template `templates/contrato/_componentes.md`): é um **vocabulário genérico de front** (button, input, table, card, toolbar, chart…), agnóstico de framework — **não** um catálogo bespoke de blocos. Fica na **raiz** de `refined/`. As telas do 1.2 referenciam os componentes pelo **nome genérico** (campo **Componentes:**).
 4. Marcar inferências com `*(inferência)*` e lacunas com `⚠ NÃO IDENTIFICADO — definir: <pergunta>`.
 5. Salvar o `Requisitos/<feature>.md`. Atualizar `refined/index.md` (linha da feature) e anexar entrada em `refined/log.md`.
 
+## DSL `wireframe` (por tela)
+Bloco ` ```wireframe ` line-based, processado de cima p/ baixo num stack vertical;
+2 espaços de indentação aninham dentro de um `card`. O autor escreve rótulos normalmente
+(servem à prosa), mas o render do navegador é **fat marker, só-layout** — mostra apenas as
+formas (sem texto legível); a **forma** indica o tipo de componente.
+
+| Sintaxe | Nó |
+|---|---|
+| `# Texto` | barra de título (toolbar) |
+| `## Texto` | subtítulo |
+| `[[ a \| b \| c ]]` | linha de N colunas iguais |
+| `card "Título":` + linhas indentadas (2 espaços) | card/região com filhos |
+| `[Rótulo____]` (≥2 underscores finais) | input |
+| `[~ legenda ~]` | placeholder de gráfico (chart) |
+| `[Texto]` (curto, sem underscores) | botão |
+| `(!) texto` | alerta/banner |
+| `- item` | item de lista (linhas `-` consecutivas = uma lista) |
+| `\| a \| b \|` (linhas consecutivas) | tabela (1ª linha = cabeçalho) |
+| texto livre | label |
+
+Desambiguação: `[token]` sem `____`/`~` → botão; `[token____]` → input; `[~...~]` → gráfico;
+card só via `card "...":` + indentação. Mapa completo DSL → componente genérico em
+`componentes.md`. Exemplo:
+
+```wireframe
+# Painel do Modelo
+[[ v7 | 82% acc | drift OK ]]
+[~ tendência de acurácia ~]
+(!) 312 créditos sem rating
+[Configurar] [Precision/Recall] [Recalcular]
+```
+
 ## Saída
-- **Cap. 1** do `refined/Requisitos/<feature>.md` preenchido, com o Mermaid de fluxo (1.1) e o de navegação (1.3) e frontmatter `tipo: contract`.
-- `refined/componentes.md` criado ou atualizado com os blocos de UI da feature.
+- **Cap. 1** do `refined/Requisitos/<feature>.md` preenchido, com o Mermaid de fluxo (1.1), o de navegação (1.3), e por tela um bloco ` ```wireframe ` + linha **Componentes:** (nomes genéricos). Frontmatter `tipo: contract`.
+- `refined/componentes.md` mantido como ponteiro fino do vocabulário genérico de componentes.

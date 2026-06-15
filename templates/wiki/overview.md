@@ -21,7 +21,7 @@ Requisitos/; histórico → log).>
 - [Log de evolução](log.md)
 - Camada de Intenção: [Visão](visao.md)
 - Camada de Requisitos: [Requisitos/](Requisitos/)
-- Catálogo de componentes: [componentes.md](componentes.md)
+- Componentes (vocabulário genérico): [componentes.md](componentes.md)
 - Blueprint: [blueprint.md](blueprint.md)
 
 ## Relacionado

@@ -24,12 +24,15 @@ perguntas.
 - `Requisitos/<feature>.md` — Camada de Requisitos: **um único documento por
   feature**, com frontmatter `eixo: processo | classe` e 4 capítulos H2:
   `## 1. Telas & Fluxos` (Mermaid de fluxo na 1.1 + Mermaid de navegação na 1.3; sem
-  subseção 1.4 separada), `## 2. Histórias` (`US-NN` — **sem critérios de aceite**, a
+  subseção 1.4 separada; **cada tela `T-NN` traz um bloco ` ```wireframe ` (sketch
+  fat-marker do layout) e a linha `Componentes:` com nomes genéricos**), `## 2. Histórias` (`US-NN` — **sem critérios de aceite**, a
   prova vive no Cap. 3.3), `## 3. Requisitos & Cenários de Teste` (`RF-NN`,
   `RNF-*` + cenários Gherkin-like), `## 4. Dados` (modelo **derivado**: da classe se
   `eixo=classe`; das atividades se `eixo=processo`).
-- `componentes.md` — catálogo de componentes (blocos de UI reutilizáveis), na **raiz**,
-  artefato product-level.
+- `componentes.md` — **ponteiro fino** (na **raiz**) p/ um vocabulário **genérico de
+  front** (button, input, table, card, toolbar, chart…), agnóstico de framework; cada
+  projeto mapeia p/ sua lib concreta (Material Angular/MUI/shadcn/HTML — exemplos). **Não**
+  é catálogo bespoke de blocos.
 - `blueprint.md` — visão geral da solução (cadeia de valor), na **raiz**, artefato
   product-level.
 - `_archive/` — artefatos obsoletos *(opcional)*.
@@ -59,6 +62,13 @@ Blocos ` ```mermaid ` embutidos no markdown, renderizados no navegador:
   `eixo=classe`).
 - Contrato Cap. 1.3 — navegação entre telas (sempre). **Não** há subseção 1.4 separada.
 - Visão Cap. 1 — jornada macro (opcional).
+
+## Wireframe nas telas
+Cada tela `T-NN` (Cap. 1.2) traz um bloco ` ```wireframe ` (DSL line-based) esboçando o
+layout, renderizado no navegador como SVG **fat marker, só-layout** (sem texto legível). A
+linha `Componentes:` lista os componentes pelo **nome genérico** (toolbar, card, table,
+list, button, input, chart…) do vocabulário em `componentes.md`. Gramática da DSL e mapa
+DSL → componente: ver `componentes.md` e `docs/CONVENCOES-V2.md`.
 
 ## Convenções de página
 - Frontmatter YAML: `titulo`, `tipo`, `atualizado_em`, `status`, `fontes` (opcional);

@@ -23,7 +23,7 @@ relativo e uma linha de descrição.>
 - [<Feature>](Requisitos/<slug>.md) — eixo: <processo|classe> — <descrição> — <N> ⚠
 
 ## Componentes
-- [catálogo de componentes](componentes.md) — blocos de UI reutilizáveis
+- [componentes](componentes.md) — vocabulário genérico de componentes de front (ponteiro fino)
 
 ## Fontes
 - <referência ao conjunto de fontes em trusted/ — contagem por origem>

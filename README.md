@@ -18,8 +18,9 @@ A spec é organizada em duas camadas:
 - **Camada de Requisitos** — *o que* o produto faz, feature a feature. Por feature, **um
   único documento**, `refined/Requisitos/<feature>.md`, com 4 capítulos
   (telas/fluxos, histórias, requisitos & cenários de teste, dados); mais o blueprint
-  product-level (cadeia de valor) e o catálogo de componentes (`refined/componentes.md`,
-  na raiz).
+  product-level (cadeia de valor) e o **ponteiro fino de componentes**
+  (`refined/componentes.md`, na raiz) — um vocabulário genérico de front, não um catálogo
+  bespoke.
 
 O resultado é um wiki em `refined/` — markdown com links relativos, IDs estáveis de
 cross-reference (`JTBD-NN`, `RN-NN`, …) e dois artefatos HTML navegáveis
@@ -116,6 +117,19 @@ Blocos ` ```mermaid ` embutidos no markdown são renderizados no navegador:
 - Contrato Cap. 1.3 — navegação entre telas (sempre). **Não** há subseção 1.4 separada.
 - Visão Cap. 1 — jornada macro (opcional).
 
+## Wireframe nas telas + vocabulário de componentes
+
+Cada tela `T-NN` (Cap. 1.2 de `Requisitos/<feature>.md`) traz um bloco ` ```wireframe `
+(DSL line-based) que esboça o layout, renderizado no navegador como SVG **fat marker,
+só-layout** — formas sem texto legível. A linha `Componentes:` de cada tela lista os
+componentes pelo **nome genérico** (toolbar, card, table, list, button, input, chart…).
+
+`refined/componentes.md` é um **ponteiro fino** p/ esse vocabulário **genérico de
+front-end**, agnóstico de framework (button, slider, input, select, table, list, card,
+tabs, dialog, toolbar, chart…); cada projeto mapeia p/ a sua lib concreta (Material
+Angular, MUI, shadcn/ui, HTML nativo — só exemplos). Gramática da DSL e mapa
+DSL → componente: `docs/CONVENCOES-V2.md`.
+
 ## As skills
 
 ### Camada de Intenção (1)
@@ -163,7 +177,7 @@ navegável (sem backend), que abre com duplo-clique como arquivo único.
 refined/
   index.md  log.md  overview.md  blueprint.md   # 4 mds da wiki
   visao.md                         # a Visão — 3 capítulos (mínimo) — na raiz
-  componentes.md                   # catálogo de componentes (product-level) — na raiz
+  componentes.md                   # ponteiro fino: vocabulário genérico de componentes — na raiz
   Requisitos/
     <feature>.md                   # 1 doc por feature — 4 capítulos (mínimo)
   _archive/                        # artefatos obsoletos (opcional)

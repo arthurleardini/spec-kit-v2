@@ -43,7 +43,6 @@ A antiga "Camada de Contrato" passa a se chamar **Camada de Requisitos**. Por fe
 - `contrato-requisitos` → Cap. 2 (personas & objetivos + RF/RNF + cenários de teste).
 - `contrato-dados` → Cap. 3 (derivado, referenciando `modelo-dados.md`).
 - `contrato-blueprint` → inalterado (product-level PRD).
-- ~~`contrato-historias`~~ — **removida** (Histórias morreu).
 
 ## Mudança 2-bis — Pense transversalmente (modelo de dados, requisitos e telas comuns)
 

@@ -166,8 +166,6 @@ DSL → componente: `docs/CONVENCOES-V2.md`.
 | `contrato-dados` | Escreve o **Cap. 3 (Dados)** — referencia o `modelo-dados.md` transversal e descreve só o que é próprio; modelo derivado (da classe, se `eixo=classe`; das atividades, se `eixo=processo`). |
 | `contrato-blueprint` | Blueprint product-level — features na cadeia de valor (inalterado). |
 
-> ~~`contrato-historias`~~ foi **removida**: Histórias e Requisitos eram redundantes; a
-> intenção do usuário agora vive na §2.1 (Personas & objetivos) dentro de Requisitos.
 
 ### Operacionais (6)
 

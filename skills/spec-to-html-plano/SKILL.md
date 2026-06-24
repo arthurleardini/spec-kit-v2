@@ -32,9 +32,18 @@ existe no wiki. Sempre a primeira das skills `spec-to-html-*` a rodar.
 3. Selecionar o conjunto 80/20 de telas — ~10-12 telas que cobrem a maior parte do
    valor. Priorizar a jornada da persona primária de ponta a ponta; incluir telas de
    setup e pontes entre personas só quando necessárias para a jornada fazer sentido.
-4. Emitir a tabela de telas: uma linha por tela, colunas `id` · tela · persona ·
-   feature-fonte. O `id` segue o padrão `tela-<slug>`.
-5. **Checkpoint:** apresentar a tabela ao usuário e aguardar validação antes de
+4. **Organizar o fluxo de informação (ver Princípios transversais em `spec-to-html`):**
+   - Agrupar as telas em **poucas áreas de menu** (não um item por tela). Nomear os grupos
+     pela cadeia de valor / por modo de uso (ex.: Carteira · Operação · Analytics ·
+     Configurações).
+   - **Separar configuração de operação:** toda tela de parâmetro vai para um grupo
+     **Configurações**; telas operacionais não carregam blocos de config.
+   - Marcar quais telas são **navegação interna** (detalhe que abre em drawer lateral,
+     editor que abre por clique/modal) em vez de item de menu próprio — essas não entram
+     na sidebar, são alcançadas de dentro de outra tela.
+5. Emitir a tabela de telas: uma linha por tela, colunas `id` · tela · **área (grupo de menu)** ·
+   **acesso (menu | interna: drawer/modal/clique)** · persona · feature-fonte. O `id` segue o padrão `tela-<slug>`.
+6. **Checkpoint:** apresentar a tabela (com áreas e acesso) ao usuário e aguardar validação antes de
    passar para `spec-to-html-scaffold`.
 
 ## Saída

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec Kit v2 · sessão de apresentação</title>
+<style>
+  :root{
+    --ink:#16181d; --ink-soft:#4a4f5a; --paper:#f6f5f2; --card:#fffdfa;
+    --line:#e2ddd3; --accent:#1f6f5c; --accent-soft:#e4efea; --accent-ink:#0f4738;
+    --amber:#9a6b12; --amber-soft:#f6edd9; --rose:#a23b46; --rose-soft:#f6e2e3;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px 80px}
+  header.top{padding:54px 0 30px;border-bottom:2px solid var(--ink)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.05;margin:.28em 0 .15em;letter-spacing:-.02em}
+  .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:0}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .pill{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:var(--card);padding:5px 11px;border-radius:999px;color:var(--ink-soft)}
+  .pill strong{color:var(--ink)}
+
+  section.block{border-bottom:1px solid var(--line);padding:34px 0}
+  .bhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .bnum{font-family:var(--mono);font-size:13px;color:#fff;background:var(--accent);width:30px;height:30px;display:grid;place-items:center;border-radius:8px;flex:none;font-weight:600}
+  .bhead h2{font-size:23px;margin:0;letter-spacing:-.01em;flex:1 1 auto}
+  .chips{display:flex;gap:8px;flex:none}
+  .chip{font-family:var(--mono);font-size:11.5px;padding:4px 9px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);white-space:nowrap}
+  .chip.ppl{background:#eceae4;color:var(--ink-soft)}
+  .block > p{color:var(--ink-soft);margin:.5em 0}
+  .block h3{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-ink);margin:22px 0 8px;font-family:var(--mono);font-weight:600}
+  ul.clean{list-style:none;padding:0;margin:8px 0}
+  ul.clean li{padding:6px 0 6px 22px;position:relative;border-bottom:1px dashed var(--line)}
+  ul.clean li:last-child{border-bottom:0}
+  ul.clean li::before{content:"";position:absolute;left:4px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  code{font-family:var(--mono);font-size:.88em;background:#eceae4;padding:1px 5px;border-radius:4px;color:var(--accent-ink)}
+
+  .flow{font-family:var(--mono);font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:2}
+  .flow b{background:var(--accent-soft);color:var(--accent-ink);padding:2px 7px;border-radius:5px;font-weight:600}
+  .flow .opt{background:var(--amber-soft);color:var(--amber)}
+  .arrow{color:#b7b0a3;padding:0 4px}
+
+  .tree{font-family:var(--mono);font-size:12.5px;background:#1b1d22;color:#d7d3c8;border-radius:10px;padding:18px 20px;overflow-x:auto;line-height:1.7;white-space:pre}
+  .tree .dir{color:#7fcbb6}.tree .root{color:#fff;font-weight:600}.tree .c{color:#8a8678}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+  @media(max-width:640px){.split{grid-template-columns:1fr}}
+  .axis{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .axis h4{margin:0 0 6px;font-size:15px}
+  .axis .tag{font-family:var(--mono);font-size:11px;color:var(--accent-ink);background:var(--accent-soft);padding:2px 7px;border-radius:5px}
+  .axis p{margin:8px 0 0;font-size:14px;color:var(--ink-soft)}
+
+  .callout{border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:0 8px 8px 0;padding:14px 16px;margin:18px 0;font-size:14px;color:#5f4a16}
+  .callout strong{color:var(--amber)}
+  .callout.ext{border-color:var(--rose);background:var(--rose-soft);color:#6b2630}
+  .callout.ext strong{color:var(--rose)}
+
+  .quote{font-size:20px;line-height:1.4;border-left:3px solid var(--accent);padding:6px 0 6px 18px;margin:18px 0;color:var(--accent-ink);font-weight:500}
+  .skillgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+  .sk{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);background:var(--card);border-radius:7px;padding:7px 9px}
+  .sk b{color:var(--accent-ink)}.sk span{color:var(--ink-soft);display:block;font-family:var(--sans);font-size:11px;margin-top:2px}
+
+  footer{padding:30px 0 0;color:var(--ink-soft);font-size:13px}
+  footer .note{font-family:var(--mono);font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="kicker">Onboarding · SYDLE AI</div>
+    <h1>Spec Kit v2</h1>
+    <p class="lede">Kit replicável de skills para escrever a spec de um produto como wiki <strong>wikiLLM</strong>: o agente escreve e mantém o markdown, o humano cura as fontes e pergunta.</p>
+    <div class="meta-row">
+      <span class="pill"><strong>25 min</strong> · 4 blocos</span>
+      <span class="pill">formato: <strong>walkthrough</strong></span>
+      <span class="pill">público: <strong>2-6</strong></span>
+    </div>
+  </header>
+
+  <!-- BLOCO 1 -->
+  <section class="block">
+    <div class="bhead">
+      <span class="bnum">1</span>
+      <h2>O que é + problema que resolve</h2>
+      <span class="chips"><span class="chip">5 min</span><span class="chip ppl">2-3</span></span>
+    </div>
+
+    <h3>O que é</h3>
+    <p>Um kit de skills (roda no Cursor) que constrói a especificação de um produto em duas camadas, mais uma camada transversal compartilhada:</p>
+    <ul class="clean">
+      <li><strong>Camada de Intenção</strong> (<code>visao.md</code>): por que e para quem o produto existe. Um doc, três capítulos: Produto, Glossário, Regras &amp; Métricas.</li>
+      <li><strong>Camada de Requisitos</strong> (<code>Requisitos/&lt;feature&gt;.md</code>): o que o produto faz, feature a feature. Um doc por feature, três capítulos: Telas &amp; Fluxos, Requisitos &amp; Cenários, Dados.</li>
+      <li><strong>Transversais</strong> (<code>modelo-dados.md</code>, <code>telas-comuns.md</code>, <code>requisitos-transversais.md</code>): o que vale para várias features mora aqui uma vez; a feature referencia.</li>
+    </ul>
+
+    <h3>Problema que resolve</h3>
+    <p>Spec espalhada, requisito repetido em cada feature, telas se multiplicando. A v2 ataca isso com três decisões de design:</p>
+    <ul class="clean">
+      <li><strong>Transversal-first</strong>: modelo de dados, telas e RNF/RF comuns são definidos uma vez; a feature aponta para eles e descreve só o próprio.</li>
+      <li><strong>Minimizar telas</strong>: reusar arquétipos de <code>telas-comuns.md</code> e fundir vistas em abas/drawers em vez de criar tela nova.</li>
+      <li><strong>Agentes especialistas, saída enxuta</strong>: cada skill cuida de um capítulo e gera menos artefato, com linguagem de produto agnóstica de tecnologia.</li>
+    </ul>
+  </section>
+
+  <!-- BLOCO 2 -->
+  <section class="block">
+    <div class="bhead">
+      <span class="bnum">2</span>
+      <h2>Onde clonar + como abrir o workspace</h2>
+      <span class="chips"><span class="chip">5 min</span><span class="chip ppl">2-3</span></span>
+    </div>
+
+    <ul class="clean">
+      <li><strong>Repo:</strong> SYDLE AI, na raiz do workspace ou na subpasta <code>spec-kit-v2/</code>.</li>
+      <li><strong>Portas de entrada:</strong> conversa direta, documentos (PDF/DOCX convertidos via <code>markitdown</code>) ou o pipeline <code>raw → trusted → wiki</code>.</li>
+      <li><strong>Abrir:</strong> abra a pasta no Cursor e as skills ficam disponíveis. Comece por <code>spec-scaffold</code>, que cria a estrutura de diretórios e os arquivos-semente.</li>
+    </ul>
+
+    <h3>Fluxo típico (skills reais hoje)</h3>
+    <div class="flow">
+      <b>spec-scaffold</b><span class="arrow">→</span><b>intencao-visao</b><span class="arrow">→</span><b>spec-transversais</b>
+      <span class="arrow">→</span><b>contrato-telas-fluxos</b><span class="arrow">→</span><b>contrato-requisitos</b><span class="arrow">→</span><b>contrato-dados</b><br>
+      <span class="arrow">→</span><b>spec-navigator</b><span class="arrow">→</span><b>spec-audit</b> / <b>spec-lint</b><span class="arrow">→</span><span class="opt">spec-to-html (opcional)</span>
+    </div>
+
+    <h3>As 16 skills, por papel</h3>
+    <div class="skillgrid">
+      <div class="sk"><b>spec-scaffold</b><span>cria a spec nova</span></div>
+      <div class="sk"><b>intencao-visao</b><span>Visão (Intenção)</span></div>
+      <div class="sk"><b>spec-transversais</b><span>modelo/telas/RNF-T</span></div>
+      <div class="sk"><b>contrato-telas-fluxos</b><span>Cap.1 do contrato</span></div>
+      <div class="sk"><b>contrato-requisitos</b><span>Cap.2 + cenários</span></div>
+      <div class="sk"><b>contrato-dados</b><span>Cap.3 do contrato</span></div>
+      <div class="sk"><b>contrato-blueprint</b><span>cadeia de valor</span></div>
+      <div class="sk"><b>spec-navigator</b><span>gera o navigator HTML</span></div>
+      <div class="sk"><b>spec-audit</b><span>clareza via CSD</span></div>
+      <div class="sk"><b>spec-lint</b><span>health-check do wiki</span></div>
+      <div class="sk"><b>spec-wiki</b><span>ingest / consulta</span></div>
+      <div class="sk"><b>spec-to-html ⁺</b><span>+ plano/scaffold/telas/build</span></div>
+    </div>
+  </section>
+
+  <!-- BLOCO 3 -->
+  <section class="block">
+    <div class="bhead">
+      <span class="bnum">3</span>
+      <h2>Caso prático</h2>
+      <span class="chips"><span class="chip">12 min</span><span class="chip ppl">4-6</span></span>
+    </div>
+    <p>Abrir a árvore <code>refined/</code> de um projeto real (ou do template) e navegar no <code>refined-navigator.html</code>, com Mermaid renderizado e wireframes fat-marker.</p>
+
+    <div class="tree"><span class="c"># refined/ · o wiki de um produto</span>
+<span class="root">refined/</span>
+├─ <span class="dir">visao.md</span>            <span class="c">Intenção: Produto · Glossário · Regras &amp; Métricas</span>
+├─ <span class="dir">blueprint.md</span>        <span class="c">cadeia de valor (product-level)</span>
+├─ <span class="dir">modelo-dados.md</span>     <span class="c">┐</span>
+├─ <span class="dir">telas-comuns.md</span>     <span class="c">├ transversais (definidos 1x)</span>
+├─ <span class="dir">requisitos-transversais.md</span> <span class="c">┘ RNF-T-* / RF-T- * / Integrações</span>
+├─ <span class="dir">Requisitos/</span>
+│   ├─ feature-a.md     <span class="c">Telas&amp;Fluxos · Requisitos · Dados</span>
+│   └─ feature-b.md
+└─ <span class="dir">refined-navigator.html</span>  <span class="c">artefato navegável</span></div>
+
+    <h3>O detalhe que ancora tudo: o eixo no frontmatter</h3>
+    <p>Cada contrato declara <code>eixo: processo</code> ou <code>eixo: classe</code>. É a mesma camada de Requisitos, parametrizada pela granularidade.</p>
+    <div class="split">
+      <div class="axis">
+        <span class="tag">eixo: processo</span>
+        <h4>Atividade / fluxo</h4>
+        <p>A 1.1 funde fluxo e processo num flowchart (BPMN leve). Os dados do Cap.3 derivam das atividades. Bom para jornadas e tramitação.</p>
+      </div>
+      <div class="axis">
+        <span class="tag">eixo: classe</span>
+        <h4>Formulário / objeto</h4>
+        <p>A 1.1 é o ciclo do formulário. A própria classe já é o modelo de dados do Cap.3. Bom para cadastros e objetos.</p>
+      </div>
+    </div>
+
+    <div class="callout ext"><strong>Ressalva (fora do kit):</strong> a ponte do eixo com BPMN (Especificator) e FormDef (Prototipator) é integração SYDLE, não faz parte do spec-kit-v2 hoje. Nenhuma skill referencia essas ferramentas. Ver bloco 4 (BL-16).</div>
+
+    <p>Para fechar a demo: os dois artefatos HTML abrem com duplo-clique, sem servidor. <code>refined-navigator.html</code> navega o wiki; <code>blueprint.html</code> mostra a cadeia de valor.</p>
+  </section>
+
+  <!-- BLOCO 4 -->
+  <section class="block">
+    <div class="bhead">
+      <span class="bnum">4</span>
+      <h2>Backlog evolutivo + handoff</h2>
+      <span class="chips"><span class="chip">3 min</span><span class="chip ppl">1-2</span></span>
+    </div>
+    <p>Do <code>2026-06-14-backlog-v2.md</code> (confirmar com Arthur):</p>
+    <ul class="clean">
+      <li><strong>Rodada 1 em curso:</strong> mínimo comum definido, Intenção colapsada na Visão (Produto + Glossário + Regras &amp; Métricas), eixos processo/classe nos contratos.</li>
+      <li><strong>BL-16 (futuro):</strong> skill <code>spec-to-prototyper</code>, a ponte JSON do SpecKit para o prototipador. Ainda não existe entre as skills.</li>
+      <li><strong>BL-20:</strong> adoção descentralizada. Cada gestor puxa o uso no seu time, com meta de ~12 pessoas a cada 15 dias.</li>
+      <li><strong>Fora de escopo imediato:</strong> gold set de specs reais, score de confiança por afirmação, novo ingestor raw/trusted.</li>
+    </ul>
+    <div class="quote">"Com os requisitos fechados no wiki, entramos no CodeForge, começando pelo Vergil."</div>
+  </section>
+
+  <footer>
+    <div class="note">Conteúdo conferido contra as skills do <code>spec-kit-v2</code> em 2026-06-26. Os nomes Especificator, Prototipator, Vergil e CodeForge são ferramentas SYDLE externas ao kit. Entram aqui como roadmap e handoff, não como parte das skills atuais.</div>
+  </footer>
+
+</div>
+</body>
+</html>

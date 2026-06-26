@@ -46,10 +46,25 @@ perguntas.
   é catálogo bespoke de blocos.
 - `blueprint.md` — visão geral da solução (cadeia de valor), na **raiz**, artefato
   product-level.
-- `_archive/` — artefatos obsoletos *(opcional)*.
+- `_archive/` — artefatos obsoletos e **features fora de escopo** (ver "Convenção de arquivamento") *(opcional)*.
 - ~~`intencao/`, `contracts/`, `entities/`, `concepts/`, `analyses/`~~ — **não existem**
   na estrutura FLAT da v2 (a Visão e o catálogo de componentes ficam na raiz; os docs de
   feature ficam em `Requisitos/`).
+
+## Convenção de arquivamento (feature fora de escopo)
+Quando uma feature **não é priorizada** (não cancelada), o conhecimento é preservado, não apagado:
+- mover `refined/Requisitos/<feature>.md` → `refined/_archive/<feature>.md`;
+- o **frontmatter** permanece na 1ª linha (YAML válido), com `status: fora-escopo`;
+- logo após o frontmatter, **um banner**:
+  `> **FORA DE ESCOPO** — <motivo, citando a fonte de priorização>. Arquivada em <AAAA-MM-DD>; conhecimento preservado para evolução futura.`
+- no `index.md`, seção `## Fora de escopo (arquivado — não priorizado)` com os links
+  `_archive/<x>.md` e o sufixo `— FORA DE ESCOPO`;
+- **corrigir cross-links pela profundidade**: features mantidas que apontavam para a
+  arquivada → `../_archive/x.md`; dentro da arquivada, links para features mantidas →
+  `../Requisitos/x.md`; links para transversais ficam **inalterados** (mesma profundidade
+  `../`, pois `Requisitos/` e `_archive/` estão no mesmo nível).
+- o `build-navigator.py` **só varre `Requisitos/*.md`** — `_archive/` já é ignorado e a
+  feature arquivada some do navegador sem ação extra.
 
 ## Princípio transversal-first
 Modelo de dados, telas e requisitos são pensados **transversalmente** (um modelo canônico,

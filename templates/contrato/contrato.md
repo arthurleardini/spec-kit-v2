@@ -35,6 +35,7 @@ fontes:
 > - O que o sistema deve fazer + rastreio RN → Cap. 2.2 RF (tabela). Não repetir como prosa em outro lugar.
 > - Como se prova (Dado/Quando/Então) → Cap. 2.4 Cenários de Teste.
 > - Requisito comum a várias features → `RNF-T-*` / `RF-T-*` em `requisitos-transversais.md`, citado por ID; nunca reescrever o enunciado aqui.
+> - Sistema/fonte que a feature integra → **catálogo transversal** (seção `## Integrações` de `requisitos-transversais.md`); a feature só traz, na Cap. 2.3, a **linha de referência** que cita os sistemas que ela toca — nunca a tabela completa.
 > - Invariante de domínio (lei) → `RN-NN` na Visão, citado por ID; nunca reescrever o enunciado no contrato.
 > - Necessidade macro → `JTBD-NN` na Visão; citar o ID, não reparafrasear.
 > - Entidade de domínio → `modelo-dados.md`, citada por nome; o Cap. 3 só descreve o que é próprio da feature.
@@ -159,7 +160,9 @@ flowchart TD
 
 #### (outras categorias aplicáveis: Auditoria, Conformidade, Escalabilidade, Observabilidade)
 
-**Transversais aplicáveis:** <liste os `RNF-T-*` de ../requisitos-transversais.md que valem para esta feature — ex.: Segurança `RNF-T-SEG-01`, `RNF-T-SEG-02`; Auditoria `RNF-T-AUD-01`.>
+**Integrações:** ver [catálogo transversal](../requisitos-transversais.md) (§ Integrações) — esta feature usa: <SistemaA>, <SistemaB>, … <Nomes com o vocabulário **canônico** do Glossário (Cap. 2 de ../visao.md), iguais aos da matriz do catálogo. Não replicar a tabela aqui: papel/direção/fallback de cada sistema vivem no catálogo transversal. Se a feature não toca nenhum sistema externo, escreva "nenhuma integração externa".>
+
+**Transversais aplicáveis:** <liste os `RNF-T-*` de ../requisitos-transversais.md que valem para esta feature — ex.: Segurança `RNF-T-SEG-01`, `RNF-T-SEG-02`; Auditoria `RNF-T-AUD-01`; Disponibilidade/degradação `RNF-T-DISP-01`.>
 
 ### 2.4 Cenários de Teste
 <Cenários que validam os requisitos acima, no formato Gherkin-like (Dado/Quando/Então). Cada cenário rastreia o(s) `RF-NN` (ou `RF-T-NN` / `RNF-T-*`) que verifica. Cobrir caminho feliz, exceções e estados de borda relevantes.>

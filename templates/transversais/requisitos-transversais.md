@@ -87,6 +87,28 @@ field-level access.>
 
 ---
 
+## Integrações
+
+<!-- Catálogo CONSOLIDADO de integrações do produto. NÃO é RF-T nem RNF-T: é uma matriz
+sistema × feature. Cada sistema externo/fonte aparece UMA vez (dedupe por sistema); a coluna
+"Features que usam" lista todas as features que o tocam. Cada contrato de feature apenas
+**referencia** este catálogo (linha única na Cap. 2.3), sem replicar a tabela. Origem
+conceitual: item "Integrações e sistemas envolvidos" do Checklist de Levantamento Negocial
+(§11). Regras:
+- Nomear os sistemas com o **vocabulário canônico** do Glossário (Cap. 2 de visao.md).
+- "Papel (consolidado)" descreve a função do sistema no produto, somando os papéis vistos nas features.
+- "Direção": consome / produz / bidirecional (a do conjunto de usos).
+- "Criticidade / fallback": crítica ou degradável + fallback **coerente** com o RNF-T de
+  degradação (ex.: `RNF-T-DISP-01`), citado por ID.
+- Marcar `*(inferência)*` para sistemas/papéis deduzidos e `⚠ NÃO IDENTIFICADO — definir:
+  <pergunta>` quando faltar confirmação. -->
+
+| Sistema / fonte | Papel (consolidado) | Direção | Criticidade / fallback | Features que usam |
+|---|---|---|---|---|
+| <sistema, do Glossário> | <para que serve no produto, somando os usos das features> | consome / produz / bidirecional | <crítica / degradável> + <fallback coerente com `RNF-T-DISP-01`> | <feature-a>, <feature-b> |
+
+---
+
 ## Notas de uso
 
 - Cada feature deve, no seu Cap. 2, **referenciar os IDs acima** (ex.: "Segurança:

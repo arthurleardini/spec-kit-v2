@@ -57,6 +57,17 @@ a Visão existe e há ≥ 2 features (ou para consolidar uma spec já escrita po
    `*Subsume:*` quais requisitos de feature cada transversal substitui (rastreabilidade).
 3. IDs estáveis; ao remover, manter o número vago. Valores numéricos são parâmetros de
    instância.
+4. **Catálogo de Integrações (seção `## Integrações`):** consolidar **todas** as integrações
+   citadas pelas features numa única **matriz sistema × feature** — colunas `| Sistema /
+   fonte | Papel (consolidado) | Direção | Criticidade / fallback | Features que usam |`.
+   Esta seção **não** é RF-T nem RNF-T: é um catálogo. Regras: dedupe por sistema (cada
+   sistema aparece uma vez; somar os papéis e listar todas as features que o tocam na última
+   coluna); nomear com o **vocabulário canônico** do Glossário; direção = consome / produz /
+   bidirecional; cada fallback **coerente com o RNF-T de degradação** (ex.: `RNF-T-DISP-01`),
+   citado por ID; marcar `*(inferência)*` para sistemas/papéis deduzidos e `⚠ NÃO
+   IDENTIFICADO — definir: <pergunta>` para lacunas. Origem conceitual: item "Integrações e
+   sistemas envolvidos" do Checklist de Levantamento Negocial (§11). Manter a matriz
+   sincronizada quando uma feature passa a usar (ou deixa de usar) um sistema.
 
 ### 3. Telas comuns (`telas-comuns.md`)
 1. Varrer o **Cap. 1 (Telas & Fluxos)** de cada feature — os `#### T-NN` e seus wireframes.
@@ -72,7 +83,10 @@ apenas referencie os transversais:
 - **Cap. 1:** cada `T-NN` declara `**Arquétipo:** A-NN` e descreve só o que muda; fundir
   telas redundantes em abas/drawers quando o arquétipo permitir (minimizar telas).
 - **Cap. 2:** trocar requisitos comuns por citações de `RNF-T-*`/`RF-T-*` no bloco
-  "Transversais aplicáveis"; manter só o que é próprio da feature.
+  "Transversais aplicáveis"; manter só o que é próprio da feature. Trocar qualquer **tabela
+  de integrações** por feature pela **linha de referência** ao catálogo (`**Integrações:**
+  ver [catálogo transversal](../requisitos-transversais.md) (§ Integrações) — esta feature
+  usa: …`); os detalhes (papel/direção/fallback) vivem só na matriz do transversal.
 - **Cap. 3:** trocar a re-modelagem de entidades canônicas por referência a
   `modelo-dados.md`; manter só entidades/campos próprios (configs, logs, execução).
 Nunca apagar conteúdo em silêncio que diverge do transversal — quando uma feature diverge

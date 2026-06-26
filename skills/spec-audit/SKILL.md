@@ -9,6 +9,8 @@ Lê um documento da spec (tipicamente da Camada de Intenção) e o audita pelo m
 
 Serve para **validar a clareza antes de avançar de camada** — por exemplo, conferir a Camada de Intenção antes de gerar a Camada de Requisitos.
 
+> **Artefato de referência:** ao auditar uma spec de **demanda negocial** (contexto/regras/fluxos, sem solução técnica), use o **[Checklist de Levantamento Negocial](../../docs/checklist-levantamento-negocial.md)** como grade de cobertura — em especial os itens de *Integrações e sistemas envolvidos* (seção 11), que alimentam o **catálogo de Integrações** (seção `## Integrações`) do `requisitos-transversais.md` — referenciado por cada feature numa linha única na Cap. 2.3.
+
 ## Quando usar
 Quando o usuário pede para auditar/revisar a spec, checar se a Camada de Intenção está sólida o bastante para seguir, gerar perguntas de refino, ou levantar o que ainda está em aberto.
 

@@ -162,7 +162,7 @@ DSL → componente: `docs/CONVENCOES-V2.md`.
 | Skill | O que faz |
 | --- | --- |
 | `contrato-telas-fluxos` | Escreve o **Cap. 1 (Telas & Fluxos)** do `Requisitos/<feature>.md` da feature, com Mermaid de fluxo (1.1) e de navegação (1.3); etiqueta cada tela com seu arquétipo (`A-NN` de `telas-comuns.md`) e minimiza telas (reusa arquétipos, funde vistas em abas/drawers). |
-| `contrato-requisitos` | Escreve o **Cap. 2 (Requisitos & Cenários de Teste)** — `2.1 Personas & objetivos` (a intenção do usuário, antes "Histórias"), `RF-NN`, `RNF-*` + cenários de teste (Gherkin-like). Cita os transversais (`RNF-T-*`/`RF-T-*`) por ID. |
+| `contrato-requisitos` | Escreve o **Cap. 2 (Requisitos & Cenários de Teste)** — `2.1 Personas & objetivos` (a intenção do usuário, antes "Histórias"), `RF-NN`, `RNF-*` (incl. a **linha de referência ao catálogo de Integrações** transversal — não a tabela) + cenários de teste (Gherkin-like). Cita os transversais (`RNF-T-*`/`RF-T-*`) por ID. |
 | `contrato-dados` | Escreve o **Cap. 3 (Dados)** — referencia o `modelo-dados.md` transversal e descreve só o que é próprio; modelo derivado (da classe, se `eixo=classe`; das atividades, se `eixo=processo`). |
 | `contrato-blueprint` | Blueprint product-level — features na cadeia de valor (inalterado). |
 
@@ -172,9 +172,9 @@ DSL → componente: `docs/CONVENCOES-V2.md`.
 | Skill | O que faz |
 | --- | --- |
 | `spec-scaffold` | Cria a estrutura de um wiki wikiLLM novo (incl. os 3 transversais na raiz). Primeiro passo de uso do kit. |
-| `spec-transversais` | Gera/mantém os 3 docs transversais (`modelo-dados.md`, `requisitos-transversais.md`, `telas-comuns.md`) varrendo as features, e emagrece os docs de feature para apenas referenciá-los. |
+| `spec-transversais` | Gera/mantém os 3 docs transversais (`modelo-dados.md`, `requisitos-transversais.md` — incl. o **catálogo de Integrações** matriz sistema×feature, `telas-comuns.md`) varrendo as features, e emagrece os docs de feature para apenas referenciá-los. |
 | `spec-audit` | Auditoria CSD — levanta Certezas, Suposições e Dúvidas como perguntas acionáveis. |
-| `spec-lint` | Health-check do wiki — links quebrados, páginas órfãs, lacunas, páginas sem `## Relacionado`. |
+| `spec-lint` | Health-check do wiki — links quebrados, páginas órfãs, lacunas, páginas sem `## Relacionado`, catálogo de **Integrações** (seção `## Integrações` no transversal) + linha de referência por feature (Cap. 2.3) e convenção de **fora de escopo** (arquivados com `status: fora-escopo` + banner; `index.md` com a seção de arquivados). |
 | `spec-navigator` | Roda os scripts que (re)geram `refined-navigator.html` e `refined/blueprint.html`. |
 | `spec-wiki` | Manutenção contínua — `ingest` (integrar fonte nova) e `query` (consultar o wiki). |
 
@@ -203,8 +203,20 @@ refined/
   telas-comuns.md                  # transversal: arquétipos de tela A-NN — na raiz
   Requisitos/
     <feature>.md                   # 1 doc por feature — 3 capítulos (mínimo)
-  _archive/                        # artefatos obsoletos (opcional)
+  _archive/                        # artefatos obsoletos + features fora de escopo (opcional)
+    <feature>.md                   # status: fora-escopo + banner FORA DE ESCOPO
 ```
+
+### Convenção de fora-de-escopo (feature não priorizada)
+
+Feature não priorizada **não é apagada** — é arquivada com o conhecimento preservado:
+mover `Requisitos/<feature>.md` → `_archive/<feature>.md`, manter o frontmatter na 1ª
+linha com `status: fora-escopo`, adicionar logo após ele um banner
+`> **FORA DE ESCOPO** — <motivo, citando a fonte de priorização>. Arquivada em <data>; …`,
+e listá-la no `index.md` sob `## Fora de escopo (arquivado — não priorizado)`. Os
+cross-links se ajustam pela profundidade (`../_archive/x.md` ↔ `../Requisitos/x.md`;
+transversais inalterados). O `build-navigator.py` só varre `Requisitos/*.md`, então a
+arquivada some do navegador automaticamente. `spec-lint` verifica essa convenção.
 
 > Estrutura **FLAT**: não há pastas `intencao/`, `contracts/`, `entities/`, `concepts/`
 > nem `analyses/`. A Visão e o catálogo de componentes ficam na raiz; os docs de feature
@@ -227,3 +239,14 @@ do `refined/`. `<wiki>` é o diretório que contém `refined/`.
 
 Rodar sempre que os `.md` do `refined/` mudarem — ou usar a skill
 `spec-navigator`, que faz isso.
+
+## Documentos de referência
+
+Em `docs/` — material de apoio reutilizável.
+
+- **`docs/CONVENCOES-V2.md`** — convenções da v2 (camadas, eixo, transversais, DSL de wireframe).
+- **`docs/checklist-levantamento-negocial.md`** — checklist de validação de uma spec de
+  **demanda negocial** (contexto/regras/fluxos sem solução técnica). Usado para auditar
+  contratos (`spec-audit`). O item *Integrações e sistemas envolvidos* é a origem
+  conceitual do **catálogo de Integrações** (seção `## Integrações`) do
+  `requisitos-transversais.md` — referenciado por cada feature numa linha na Cap. 2.3.

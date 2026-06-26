@@ -111,6 +111,8 @@ def collect():
         tree.append({"label": "Wiki", "type": "group", "children": raiz})
 
     # ---- Camada de Requisitos (1 .md por feature) ----
+    # Varre SOMENTE Requisitos/*.md — features arquivadas (fora de escopo) vivem em
+    # refined/_archive/ e são deliberadamente ignoradas aqui, somindo do navegador.
     req = REFINED / "Requisitos"
     if req.is_dir():
         kids = []

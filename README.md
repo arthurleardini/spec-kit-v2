@@ -114,6 +114,21 @@ não um `raw/`/`trusted/` não muda o fluxo.
    órfãs, lacunas) e `spec-wiki` para integrar fontes novas (`ingest`) ou consultar
    o wiki (`query`).
 
+## Loop crítico (gate da Camada de Requisitos)
+
+Antes de entregar uma feature, roda o **loop crítico**: `scripts/lint_critico.py`
+(determinístico, com exit code) + **6 agentes críticos especialistas**, orquestrados pela
+skill `spec-critico`. Regras num arquivo só — `regras/criticas.toml`; achados num ledger
+auditável — `criticas/<feature>-<data>.md`.
+
+O que ele passou a cobrar em requisito funcional: **EARS-PT** (6 padrões), uma capacidade
+por RF, vocabulário fechado (sem palavra subjetiva/brecha/verbo oco), desvio declarado
+como RF padrão #5, cenário como *key example* que prova o RF, RNF **só** no transversal
+citado por ID, e tetos duros de tamanho.
+
+Metodologia e comandos: **[`docs/LOOP-CRITICO.md`](docs/LOOP-CRITICO.md)**.
+Referências que originam cada regra: **[`docs/referencias-v3.md`](docs/referencias-v3.md)**.
+
 ## Eixo de granularidade do contrato
 
 Cada `Requisitos/<feature>.md` traz no frontmatter `eixo: processo | classe`, que orienta o Cap. 1
@@ -178,6 +193,22 @@ DSL → componente: `docs/CONVENCOES-V2.md`.
 | `spec-navigator` | Roda os scripts que (re)geram `refined-navigator.html` e `refined/blueprint.html`. |
 | `spec-wiki` | Manutenção contínua — `ingest` (integrar fonte nova) e `query` (consultar o wiki). |
 
+### Loop crítico (7)
+
+Gate da Camada de Requisitos. Um crítico por hard skill de levantamento; nenhum deles
+edita o artefato — acham e assinam, a correção é do autor. Ver
+[`docs/LOOP-CRITICO.md`](docs/LOOP-CRITICO.md).
+
+| Skill | O que faz |
+| --- | --- |
+| `spec-critico` | Orquestra o loop: lint → críticos em paralelo → ledger → correção → re-lint, com número fixo de rodadas e critério de saída declarado. |
+| `critico-redacao` | Forma EARS-PT, ambiguidade, vocabulário proibido, singularidade, brevidade. |
+| `critico-testabilidade` | RF↔cenário, *key example*, fronteira da regra, resultado observável. |
+| `critico-simplicidade` | Corta tela, RF, conceito e escopo; pega RF que descreve implementação. |
+| `critico-fluxos` | Desvio e exceção não modelados, contradição fluxo↔RF, estado inalcançável. |
+| `critico-dados` | Entidade que deveria ser canônica, fonte da verdade por campo, modelo que não sustenta os RF. |
+| `critico-rastreabilidade` | ID e link, rastreio falso (RN que não justifica o RF), fato duplicado, RNF fora do transversal. |
+
 ### Geração de protótipo (5)
 
 Família `spec-to-html` — transforma a Camada de Requisitos num protótipo HTML
@@ -240,11 +271,27 @@ do `refined/`. `<wiki>` é o diretório que contém `refined/`.
 Rodar sempre que os `.md` do `refined/` mudarem — ou usar a skill
 `spec-navigator`, que faz isso.
 
+- **`scripts/lint_critico.py <refined>`** — lint crítico determinístico (gate do loop).
+  28 regras lidas de `regras/criticas.toml`: forma EARS-PT do RF, vocabulário proibido,
+  singularidade, RF↔cenário, cobertura de desvio, tetos de tamanho, RNF local, ID/link e
+  capítulo de Dados. Flags: `--json`, `--ledger <dir>`, `--so-bloqueia`, `--regras <toml>`.
+  Exit `0` limpo · `1` só «corrige» · `2` há «bloqueia».
+- **`scripts/testa_lint.py`** — regressão do lint contra as fixtures de `examples/lint/`
+  (`feature-boa.md` sai limpa; `feature-ruim.md` dispara as 27 regras esperadas).
+
 ## Documentos de referência
 
 Em `docs/` — material de apoio reutilizável.
 
 - **`docs/CONVENCOES-V2.md`** — convenções da v2 (camadas, eixo, transversais, DSL de wireframe).
+- **`docs/LOOP-CRITICO.md`** — metodologia do loop crítico: duas camadas, os 6 críticos,
+  ciclo, severidade, formato de achado e ledger, o que ficou fora da rodada.
+- **`docs/referencias-v3.md`** — dossiê de referências externas (ISO/IEC/IEEE 29148, EARS,
+  Wiegers, requirements smells, Specification by Example, *Insanely Simple*, Maeda,
+  Shape Up, Google Technical Writing, Amazon PR/FAQ, GitHub Spec Kit) com a regra do kit
+  derivada de cada bloco.
+- **`docs/backlog-ajustes-metodologia.md`** — os 7 ajustes metodológicos (M1–M7) achados
+  na análise transversal do Knowledge-MT. M1–M5 viraram regra do loop crítico.
 - **`docs/checklist-levantamento-negocial.md`** — checklist de validação de uma spec de
   **demanda negocial** (contexto/regras/fluxos sem solução técnica). Usado para auditar
   contratos (`spec-audit`). O item *Integrações e sistemas envolvidos* é a origem

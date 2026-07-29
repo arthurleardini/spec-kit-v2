@@ -1,0 +1,30 @@
+# Regras que feature-ruim.md deve disparar. Uma por linha (ID + nota).
+# Vive fora do .md para não contaminar as regras que varrem o texto inteiro (F04, T04).
+# As regras de teto (R06, S01, S03, T06) são testadas no 3º caso de testa_lint.py.
+R01  RF fora do padrão EARS-PT
+R02  RF com duas capacidades
+R03  vocabulário proibido (subjetivo, brecha, nao_verificavel, quantificador_vago, verbo_oco)
+R04  RF no negativo
+R05  RF acima do teto de palavras
+R07  voz passiva
+T01  RF sem cenário
+T02  cenário sem RF-pai
+T03  cenário sem Dado/Quando/Então
+T04  nenhum cenário de exceção
+T05  cenário que só reescreve o RF
+F01  nenhum RF de comportamento indesejado
+F02  fluxo sem decisão
+F03  sem diagrama de navegação
+F04  desvio canônico não endereçado
+S02  tela sem arquétipo
+S05  tela sem wireframe
+N01  RNF local na feature
+N02  nenhum RNF-T citado
+X01  RF sem RN de origem
+X02  ID duplicado
+X03  ID citado inexistente
+X04  link quebrado
+D01  entidade canônica remodelada
+D02  cap. 3 sem referência ao modelo canônico
+D03  campo sem tipo
+D04  detalhe técnico no cap. 3

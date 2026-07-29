@@ -123,6 +123,41 @@ Resumo do que muda na prática para quem escreve requisito. Detalhe e origem em
 6. **RNF só no transversal.** A feature cita `RNF-T-*` por ID e nunca define RNF local.
 7. **Teto corta conteúdo.** Estourou palavras/telas/RF? corta — não sobe o teto.
 
+## Concisão — o que morde e o que não morde
+
+Brevidade aqui é orçamento, não gosto: artefato longo custa contexto e degrada o agente
+que o lê depois. O que a torna verificável é o teto — e teto só vale se **alguém estoura**.
+
+Os tetos foram calibrados no corpus real de 14 features (`knowledge_cob`) e na fixture
+EARS-nativa `examples/lint/refined/Requisitos/feature-boa.md`, que cobre 9 RF, 9 cenários
+e 3 telas em **1106 palavras** — 42% da média do corpus (2607).
+
+| Teto | corpus p50 | corpus máx | fixture EARS | teto | estouram no corpus |
+|---|---|---|---|---|---|
+| palavras/artefato | 2667 | 3351 | 1106 | **2200** | 13 de 14 |
+| palavras/cenário | 41 | 80 | 44 | **50** | 29 cenários |
+| RF/feature | 13 | 18 | 9 | **14** | 5 features |
+| palavras/RF | 8 | 23 | 19 | **20** | 1 RF |
+| telas/feature | 4 | 5 | 3 | **5** | 0 |
+
+Critério: **teto ≈ mediana do corpus** — a metade mais gorda corta. A primeira versão
+destas regras usava tetos redondos (3500 / 20 / 7 / 25 / 80), todos acima do **máximo**
+do corpus: nenhuma regra de tamanho disparava. Teto folgado é regra decorativa.
+
+Onde as palavras estão hoje, no corpus:
+
+| Parte | Fatia |
+|---|---|
+| Cap. 2 (Requisitos & Cenários) | 49% |
+| Cap. 1 (Telas & Fluxos) | 23% |
+| Cap. 3 (Dados) | 19% |
+| §2.3 (RNF por feature) | 8% — some inteira pela regra `N01` |
+| Prosa instrucional herdada do template (linhas `>`) | 6% |
+
+Duas conclusões: EARS-PT **alonga o RF** (p50 8 → 11-19 palavras) e **encurta o
+artefato**, porque mata a prosa que explicava o que o enunciado não dizia. E 14% de cada
+spec é peso que não é conteúdo da feature — RNF duplicado (8%) e instrução de template (6%).
+
 ## Fora desta rodada
 
 Registrado para o kit v3 propriamente dito (esta rodada entregou só o loop):
@@ -136,3 +171,16 @@ Registrado para o kit v3 propriamente dito (esta rodada entregou só o loop):
   [backlog](backlog-ajustes-metodologia.md) — dependem de artefato novo.
 - Crítica da Camada de Intenção: hoje o loop cobre só a Camada de Requisitos; a Visão
   segue com `spec-audit` (CSD).
+
+Furos que sobram na parte de **concisão**, todos dependentes de mexer no template:
+
+- **Emagrecer `templates/contrato/contrato.md`** (225 linhas, das quais a maioria é
+  blockquote de instrução). Hoje 6% de cada spec gerada é prosa de template copiada. A
+  instrução tem de viver na skill, que o agente lê e não copia — não no template, que o
+  agente copia e não relê.
+- **Teto por capítulo**, não só por artefato. O Cap. 2 come 49% das palavras e nada
+  impede que ele coma 70%.
+- **Sem teto na Visão nem nos transversais.** O loop mede só `Requisitos/<feature>.md`;
+  a Visão pode inflar sem gate.
+- **Registro por capítulo** (narrativa na Visão × estruturado nos Requisitos) está
+  documentado em `referencias-v3.md` §E, mas não é verificado por nenhuma regra.

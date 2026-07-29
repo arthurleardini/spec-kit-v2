@@ -17,12 +17,25 @@ rodadas_max = 2          # Think Motion: loop tem fim, não roda até "ficar bom
 # Origem: Insanely Simple (Think Minimal/Phrasal), Maeda (Reduce/SHE),
 # Amazon six-pager, orçamento de contexto.
 # ---------------------------------------------------------------------------
+#
+# Calibrados no corpus real de 14 features (knowledge_cob) + na fixture EARS-nativa
+# `examples/lint/refined/Requisitos/feature-boa.md`, que cobre 9 RF / 9 cenários /
+# 3 telas em 1106 palavras. Critério: teto ≈ mediana do corpus, para que a metade
+# mais gorda tenha de cortar. Teto acima do máximo do corpus não verifica nada.
+#
+#                        corpus p50 / máx   ·  fixture EARS máx
+# palavras_por_artefato        2667 / 3351   ·   1106
+# rf_por_feature                 13 / 18     ·      9
+# telas_por_feature               4 / 5      ·      3
+# palavras_por_rf                 8 / 23     ·     19   (EARS-PT é mais longo por RF
+#                                                        e mais curto por artefato)
+# palavras_por_cenario           41 / 80     ·     44
 [tetos]
-palavras_por_rf = 25
-palavras_por_artefato = 3500
-telas_por_feature = 7
-rf_por_feature = 20
-palavras_por_cenario = 80
+palavras_por_rf = 20
+palavras_por_artefato = 2200
+telas_por_feature = 5
+rf_por_feature = 14
+palavras_por_cenario = 50
 similaridade_duplicata = 0.80   # Jaccard de tokens p/ detectar RF duplicado no transversal
 similaridade_cenario = 0.70     # Jaccard entre o «Então» do cenário e o RF que ele verifica
 

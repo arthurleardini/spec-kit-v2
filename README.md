@@ -1,252 +1,193 @@
-# Spec Kit (v2)
+# Spec Kit (v3)
 
-Kit de skills para criar uma especificação de produto no modelo wikiLLM (Camada de
-Intenção + Camada de Requisitos), independente da fonte.
+Kit de skills para especificar um produto num **arquivo único** — `spec.md` — com gate de
+qualidade automático.
 
 ## O que é
 
-O **spec-kit** é um kit replicável de skills para construir a especificação de um
-produto no modelo **wikiLLM** — um wiki de markdown navegável, escrito e mantido por
-um agente, com o conhecimento de produto destilado de fontes curadas.
+Um produto, uma spec. Seções numeradas, IDs estáveis, requisito funcional em forma fixa, e
+um loop crítico que reprova o que não passa. Não é wiki: não há índice em arquivo, log de
+edição nem página por assunto.
 
-A spec é organizada em duas camadas:
+Três coisas compõem o kit:
 
-- **Camada de Intenção** — *por que e para quem* o produto existe. Consolidada em **um
-  único documento**, `refined/visao.md` (a "Visão", na raiz de `refined/`), com 3
-  capítulos: 1. Produto (visão, proposta de valor, personas, jobs), 2. Glossário do
-  domínio, 3. Regras & Métricas.
-- **Camada de Requisitos** — *o que* o produto faz, feature a feature. Por feature, **um
-  único documento**, `refined/Requisitos/<feature>.md`, com **3 capítulos**
-  (1. Telas & Fluxos, 2. Requisitos & Cenários de Teste — que absorve as personas &
-  objetivos, antes "Histórias", 3. Dados); mais o blueprint product-level (cadeia de valor)
-  e o **ponteiro fino de componentes** (`refined/componentes.md`, na raiz).
-- **Transversais** — o que é comum a várias features vive **uma vez**, na raiz de
-  `refined/`, e cada feature **referencia**: `modelo-dados.md` (modelo de dados canônico),
-  `requisitos-transversais.md` (`RNF-T-*`/`RF-T-*`) e `telas-comuns.md` (arquétipos de tela
-  `A-NN`). **Pense transversalmente, não por feature.**
+1. **O formato** — `templates/spec.md`, 9 seções + 2 anexos. Convenções em
+   [`docs/CONVENCOES-V3.md`](docs/CONVENCOES-V3.md).
+2. **As skills** — uma por seção, especialistas, que escrevem no `spec.md`.
+3. **O loop crítico** — lint determinístico com exit code + 6 agentes críticos.
+   Metodologia em [`docs/LOOP-CRITICO.md`](docs/LOOP-CRITICO.md).
 
-O resultado é um wiki em `refined/` — markdown com links relativos, IDs estáveis de
-cross-reference (`JTBD-NN`, `RN-NN`, …) e dois artefatos HTML navegáveis
-(`refined-navigator.html`, `refined/blueprint.html`). Diagramas **Mermaid** embutidos
-no markdown são renderizados no navegador.
+## Estrutura da spec
 
-## Princípio da v2
+```
+<dir>/
+  spec.md                  # a especificação — arquivo único
+  CLAUDE.md                # regras de escrita do projeto
+  criticas/                # ledgers do loop crítico
+  refined-navigator.html   # derivado (build-navigator.py)
+```
 
-Padronizar o **mínimo comum**; o resto é opcional por projeto. Menos conceitos, mais
-robustos. Agentes mais **especialistas** gerando **menos artefatos**. Linguagem de
-produto **agnóstica** mantida.
+| Seção | Conteúdo |
+|---|---|
+| 1 | Contexto — problema, objetivo, personas (`JTBD-NN`), não-objetivos |
+| 2 | Glossário |
+| 3 | Regras de negócio (`RN-NN`, `RN-AI-NN`) |
+| 4 | Modelo de dados canônico (`erDiagram`) |
+| 5 | Requisitos transversais (`RNF-T-*`, `RF-T-NN`, integrações) |
+| 6 | Arquétipos de tela (`A-NN` + wireframe) |
+| 7 | Features — `7.N` por feature, cinco subseções fixas |
+| 8 | Questões em aberto |
+| 9 | Fontes |
+| Anexo A | Vocabulário de componentes |
+| Anexo B | Cadeia de valor |
 
-**Transversal-first** — modelo de dados, telas e requisitos são pensados
-**transversalmente** (um modelo de dados canônico, um catálogo de arquétipos de tela, um
-conjunto de `RNF-T-*`/`RF-T-*`), **não duplicados por feature**. Cada feature referencia
-esses transversais e descreve só o que é específico.
+Cada feature: metadados (**eixo**, **apetite**, **no-gos**) + fluxo e navegação em Mermaid
++ telas com arquétipo e wireframe + RF em EARS-PT + cenários + dados.
 
-**Minimizar telas** — favorecer **menos telas e menos complexidade**: reusar os arquétipos
-de `telas-comuns.md` e **fundir vistas em abas/drawers/painéis laterais** em vez de
-multiplicar telas; cada tela é etiquetada com seu arquétipo.
+## Regras de escrita que o kit cobra
 
-## Mínimo comum vs. Opcional
+1. **RF em EARS-PT** — um dos 6 padrões (`O sistema deve…` · `Enquanto…` · `Quando…` ·
+   `Onde…` · `Se…, então…` · composto). Nada de infinitivo solto.
+2. **Uma capacidade por RF** — `e` / `e/ou` ligando ações = dois RF.
+3. **Vocabulário fechado** — sem palavra subjetiva, brecha, superlativo ou verbo oco.
+   Lacuna se declara: `⚠ NÃO IDENTIFICADO — definir: <pergunta>`.
+4. **Desvio é RF** — exceção vira padrão #5, não parágrafo. Feature sem nenhum não passa.
+5. **Cenário prova, não repete** — key example com dado concreto e resultado observável.
+6. **RNF só na §5** — a feature cita `RNF-T-*` por ID e nunca define RNF local.
+7. **Um fato, um lugar** — o que aparece em ≥2 features sobe para §4/§5/§6.
+8. **Teto corta conteúdo** — estourou palavras, telas ou RF? corta. Subir teto é decisão
+   do usuário.
 
-A spec mínima de qualquer produto é composta por **três artefatos**:
+Origem de cada regra, com fonte: [`docs/referencias-v3.md`](docs/referencias-v3.md).
 
-- **Mínimo comum**
-  - `refined/visao.md` — a Visão (na raiz), com os 3 capítulos (Produto, Glossário,
-    Regras & Métricas).
-  - Os **3 transversais** (na raiz): `modelo-dados.md` (modelo de dados canônico),
-    `requisitos-transversais.md` (`RNF-T-*`/`RF-T-*`) e `telas-comuns.md` (arquétipos `A-NN`).
-  - `refined/Requisitos/<feature>.md` — um doc por feature, com os **3 capítulos**
-    (1. Telas & Fluxos, 2. Requisitos & Cenários de Teste, 3. Dados). A intenção do usuário
-    (persona → objetivo) vive na §2.1; **não há mais capítulo de Histórias**.
-  - `refined/blueprint.md` — blueprint product-level (cadeia de valor).
-- **Opcional** (só quando o projeto pedir; não gerado por padrão)
-  - Princípios de produto (`PR-NN`).
-  - Capacidades de IA como documento dedicado (`CAI-NN`) — o essencial já vira regras
-    `RN-AI-NN` na Visão.
-  - Roadmap de evolução.
-  - Métricas de input/health detalhadas (além do NSM + 1-2 guard-rails).
-  - Auditoria extra.
+## Fluxo de uso
 
-  **Não existem na estrutura FLAT da v2:** pastas `intencao/`, `contracts/`, `entities/`,
-  `concepts/`, `analyses/`. A Visão e o catálogo de componentes ficam na raiz de
-  `refined/`; os docs de feature ficam em `refined/Requisitos/`.
+```bash
+# 1. criar a spec
+skill spec-scaffold                       # spec.md + CLAUDE.md + criticas/
 
-## Portas de entrada (conversa / docs / pipeline)
+# 2. preencher (uma skill por seção)
+skill spec-contexto                       # §1 §2 §3
+skill spec-audit                          # CSD sobre §1-3, antes de avançar
+skill spec-transversais                   # §4 §5 §6
+skill feature-telas-fluxos                # §7.N.1 §7.N.2   (por feature)
+skill feature-requisitos                  # §7.N.3 §7.N.4
+skill feature-dados                       # §7.N.5
+skill spec-cadeia-valor                   # Anexo B
 
-O kit aceita três formas de alimentar a spec — e funciona **independente** de existir
-ou não um pipeline de dados:
+# 3. gate
+python3 scripts/lint_critico.py spec.md   # exit 2 = não entrega
+skill spec-critico                        # lint + 6 críticos + ledger
 
-1. **Conversa / brainstorm** — o agente conduz a conversa com o usuário e destila o
-   conhecimento direto para os documentos do wiki.
-2. **Conjunto de documentos** — um acervo de docs (PDF/DOCX/PPTX/markdown). Fontes
-   binárias são convertidas com `markitdown` antes de ler.
-3. **Pipeline raw/trusted (opcional)** — quando existe um pipeline de dados, o `raw/`
-   é catalogado e destilado em resumos `trusted/` (1 por fonte), e o wiki é gerado a
-   partir do `trusted/`.
+# 4. entregar
+python3 scripts/build-navigator.py .      # HTML navegável offline
+skill spec-to-html                        # protótipo clicável (opcional)
+```
 
-As skills `intencao-visao` e `contrato-*` consomem qualquer uma dessas portas — ter ou
-não um `raw/`/`trusted/` não muda o fluxo.
+## Portas de entrada
 
-## Fluxo de uso ponta a ponta
+O kit aceita qualquer fonte, com ou sem pipeline de dados:
 
-1. **`spec-scaffold`** — cria o wiki novo: a árvore de `refined/` e os arquivos-base
-   (`index.md`, `log.md`, `overview.md`, `blueprint.md`, `CLAUDE.md`). Roda uma vez
-   por produto.
-2. **Camada de Intenção** — rodar a skill **`intencao-visao`** com a fonte disponível
-   (conversa, docs ou trusted). Gera/mantém o documento único
-   `refined/visao.md` (na raiz) inteiro (3 capítulos).
-3. **`spec-audit`** — auditar a Visão pelo método CSD (Certezas, Suposições, Dúvidas);
-   resolver as perguntas acionáveis antes de avançar.
-4. **Camada de Requisitos** — por feature, definir o `eixo` (`processo` ou `classe`) e
-   rodar as skills `contrato-*`: cada uma escreve um **capítulo** do
-   `Requisitos/<feature>.md` da feature (telas/fluxos com Mermaid + arquétipo por tela;
-   requisitos & cenários de teste com personas & objetivos; dados derivados que referenciam
-   o modelo transversal). Rodar também `contrato-blueprint` para o blueprint product-level.
-   - **`spec-transversais`** — gerar/manter os 3 docs transversais (`modelo-dados.md`,
-     `requisitos-transversais.md`, `telas-comuns.md`) varrendo as features (extrai entidades
-     canônicas, requisitos comuns e arquétipos de tela) e **emagrecer** os docs de feature
-     para apenas referenciá-los. Rodar à medida que as features surgem.
-5. **`spec-navigator`** — rodar os scripts para gerar `refined-navigator.html` e
-   `refined/blueprint.html`. Repetir após qualquer mudança no wiki.
-6. **`spec-to-html`** — gerar um protótipo HTML navegável das telas a partir da
-   Camada de Requisitos (opcional, depois que ela existe). Roda as 4 sub-skills de
-   fase: `plano`, `scaffold`, `telas`, `build`.
-7. **Manutenção contínua** — `spec-lint` para o health-check (links quebrados,
-   órfãs, lacunas) e `spec-wiki` para integrar fontes novas (`ingest`) ou consultar
-   o wiki (`query`).
+1. **Conversa / brainstorm** — o agente conduz e destila direto para as seções.
+2. **Acervo de documentos** — PDF/DOCX/PPTX/XLSX convertidos com `markitdown` antes de ler.
+3. **Pipeline `raw/`/`trusted/`** (opcional) — quando existe, o `trusted/` alimenta as seções.
 
-## Eixo de granularidade do contrato
-
-Cada `Requisitos/<feature>.md` traz no frontmatter `eixo: processo | classe`, que orienta o Cap. 1
-(Mermaid) e o Cap. 3 (Dados):
-
-- **`processo`** — fluxo/atividades. A 1.1 funde fluxo e processo num único flowchart
-  (estilo BPMN leve), além do Mermaid de navegação entre telas (1.3). Os dados do Cap. 3
-  **derivam** das atividades (referenciando o `modelo-dados.md` transversal).
-- **`classe`** — formulários/objetos. A 1.1 é um flowchart simples do ciclo do
-  formulário/registro; cada formulário ≈ uma classe; a classe já é o modelo de dados do
-  Cap. 3.
-
-## Mermaid
-
-Blocos ` ```mermaid ` embutidos no markdown são renderizados no navegador:
-
-- Contrato Cap. 1.1 — fluxo (processo, se `eixo=processo`; ciclo do formulário, se
-  `eixo=classe`).
-- Contrato Cap. 1.3 — navegação entre telas (sempre). **Não** há subseção 1.4 separada.
-- Transversal `modelo-dados.md` — `erDiagram` do modelo de dados canônico (sempre).
-- Visão Cap. 1 — jornada macro (opcional).
-
-## Wireframe nas telas + vocabulário de componentes
-
-Cada tela `T-NN` (Cap. 1.2 de `Requisitos/<feature>.md`) traz um bloco ` ```wireframe `
-(DSL line-based) que esboça o layout, renderizado no navegador como SVG **fat marker,
-só-layout** — formas sem texto legível. A linha `Componentes:` de cada tela lista os
-componentes pelo **nome genérico** (toolbar, card, table, list, button, input, chart…).
-
-`refined/componentes.md` é um **ponteiro fino** p/ esse vocabulário **genérico de
-front-end**, agnóstico de framework (button, slider, input, select, table, list, card,
-tabs, dialog, toolbar, chart…); cada projeto mapeia p/ a sua lib concreta (Material
-Angular, MUI, shadcn/ui, HTML nativo — só exemplos). Gramática da DSL e mapa
-DSL → componente: `docs/CONVENCOES-V2.md`.
+Fonte de órgão público pode carregar PII e sigilo fiscal (CTN art. 198): rodar
+`python3 scripts/check_sensivel.py <arquivo>.md` antes de versionar ou mandar para LLM
+externo; score ≥ 40 exige anonimizar.
 
 ## As skills
 
-### Camada de Intenção (1)
+### Escrita (7)
+
+| Skill | Escreve |
+| --- | --- |
+| `spec-scaffold` | cria `spec.md`, `CLAUDE.md` e `criticas/` a partir dos templates |
+| `spec-contexto` | §1 Contexto · §2 Glossário · §3 Regras de negócio |
+| `spec-transversais` | §4 Modelo de dados · §5 Requisitos transversais · §6 Arquétipos |
+| `feature-telas-fluxos` | §7.N.1 Fluxo e navegação · §7.N.2 Telas |
+| `feature-requisitos` | §7.N.3 Requisitos funcionais · §7.N.4 Cenários de teste |
+| `feature-dados` | §7.N.5 Dados |
+| `spec-cadeia-valor` | Anexo B Cadeia de valor |
+
+### Loop crítico (7)
+
+Gate da seção 7. Um crítico por hard skill de levantamento; nenhum edita a spec — acham e
+assinam, a correção é do autor. Ver [`docs/LOOP-CRITICO.md`](docs/LOOP-CRITICO.md).
 
 | Skill | O que faz |
 | --- | --- |
-| `intencao-visao` | Produz e mantém o documento único `visao.md` (a Visão, na raiz) — os 3 capítulos: Produto/Personas/Jobs, Glossário do domínio, Regras & Métricas. Especialista; adiciona seções opcionais (princípios, capacidades-IA, roadmap) só quando pedido. |
+| `spec-critico` | orquestra: lint → críticos em paralelo → ledger → correção → re-lint, com rodadas fixas |
+| `critico-redacao` | forma EARS-PT, ambiguidade, vocabulário, brevidade |
+| `critico-testabilidade` | RF↔cenário, key example, fronteira da regra, resultado observável |
+| `critico-simplicidade` | corta tela, RF, conceito e escopo; pega RF que descreve implementação |
+| `critico-fluxos` | desvio e exceção não modelados, contradição fluxo↔RF, estado inalcançável |
+| `critico-dados` | entidade que deveria ser canônica, fonte da verdade, modelo que não sustenta os RF |
+| `critico-rastreabilidade` | ID e link, rastreio falso, fato duplicado, RNF fora da §5 |
 
-### Camada de Requisitos (4)
-
-| Skill | O que faz |
-| --- | --- |
-| `contrato-telas-fluxos` | Escreve o **Cap. 1 (Telas & Fluxos)** do `Requisitos/<feature>.md` da feature, com Mermaid de fluxo (1.1) e de navegação (1.3); etiqueta cada tela com seu arquétipo (`A-NN` de `telas-comuns.md`) e minimiza telas (reusa arquétipos, funde vistas em abas/drawers). |
-| `contrato-requisitos` | Escreve o **Cap. 2 (Requisitos & Cenários de Teste)** — `2.1 Personas & objetivos` (a intenção do usuário, antes "Histórias"), `RF-NN`, `RNF-*` (incl. a **linha de referência ao catálogo de Integrações** transversal — não a tabela) + cenários de teste (Gherkin-like). Cita os transversais (`RNF-T-*`/`RF-T-*`) por ID. |
-| `contrato-dados` | Escreve o **Cap. 3 (Dados)** — referencia o `modelo-dados.md` transversal e descreve só o que é próprio; modelo derivado (da classe, se `eixo=classe`; das atividades, se `eixo=processo`). |
-| `contrato-blueprint` | Blueprint product-level — features na cadeia de valor (inalterado). |
-
-
-### Operacionais (6)
+### Operacionais (3)
 
 | Skill | O que faz |
 | --- | --- |
-| `spec-scaffold` | Cria a estrutura de um wiki wikiLLM novo (incl. os 3 transversais na raiz). Primeiro passo de uso do kit. |
-| `spec-transversais` | Gera/mantém os 3 docs transversais (`modelo-dados.md`, `requisitos-transversais.md` — incl. o **catálogo de Integrações** matriz sistema×feature, `telas-comuns.md`) varrendo as features, e emagrece os docs de feature para apenas referenciá-los. |
-| `spec-audit` | Auditoria CSD — levanta Certezas, Suposições e Dúvidas como perguntas acionáveis. |
-| `spec-lint` | Health-check do wiki — links quebrados, páginas órfãs, lacunas, páginas sem `## Relacionado`, catálogo de **Integrações** (seção `## Integrações` no transversal) + linha de referência por feature (Cap. 2.3) e convenção de **fora de escopo** (arquivados com `status: fora-escopo` + banner; `index.md` com a seção de arquivados). |
-| `spec-navigator` | Roda os scripts que (re)geram `refined-navigator.html` e `refined/blueprint.html`. |
-| `spec-wiki` | Manutenção contínua — `ingest` (integrar fonte nova) e `query` (consultar o wiki). |
+| `spec-audit` | auditoria CSD (Certezas, Suposições, Dúvidas) das §1-3, antes de escrever feature |
+| `spec-fontes` | integra fonte nova (roteia o fato para a seção dona) e consulta a spec |
+| `spec-navigator` | roda o `build-navigator.py` e regenera o HTML navegável |
 
-### Geração de protótipo (5)
+### Protótipo (5)
 
-Família `spec-to-html` — transforma a Camada de Requisitos num protótipo HTML
-navegável (sem backend), que abre com duplo-clique como arquivo único.
-
-| Skill | O que faz |
-| --- | --- |
-| `spec-to-html` | Orquestradora/índice — descreve as 4 fases e os 2 checkpoints. |
-| `spec-to-html-plano` | Cria o repo do protótipo e seleciona o conjunto 80/20 de telas. |
-| `spec-to-html-scaffold` | Copia o design system EloGroup e escreve o esqueleto invariável. |
-| `spec-to-html-telas` | Gera um partial `screens/NN-*.html` por tela da tabela. |
-| `spec-to-html-build` | Monta o `index.html` autossuficiente, finaliza o README e verifica. |
-
-## Estrutura do `refined/` gerado
-
-```
-refined/
-  index.md  log.md  overview.md  blueprint.md   # 4 mds da wiki
-  visao.md                         # a Visão — 3 capítulos (mínimo) — na raiz
-  componentes.md                   # ponteiro fino: vocabulário genérico de componentes — na raiz
-  modelo-dados.md                  # transversal: modelo de dados canônico — na raiz
-  requisitos-transversais.md       # transversal: RNF-T-* / RF-T-* — na raiz
-  telas-comuns.md                  # transversal: arquétipos de tela A-NN — na raiz
-  Requisitos/
-    <feature>.md                   # 1 doc por feature — 3 capítulos (mínimo)
-  _archive/                        # artefatos obsoletos + features fora de escopo (opcional)
-    <feature>.md                   # status: fora-escopo + banner FORA DE ESCOPO
-```
-
-### Convenção de fora-de-escopo (feature não priorizada)
-
-Feature não priorizada **não é apagada** — é arquivada com o conhecimento preservado:
-mover `Requisitos/<feature>.md` → `_archive/<feature>.md`, manter o frontmatter na 1ª
-linha com `status: fora-escopo`, adicionar logo após ele um banner
-`> **FORA DE ESCOPO** — <motivo, citando a fonte de priorização>. Arquivada em <data>; …`,
-e listá-la no `index.md` sob `## Fora de escopo (arquivado — não priorizado)`. Os
-cross-links se ajustam pela profundidade (`../_archive/x.md` ↔ `../Requisitos/x.md`;
-transversais inalterados). O `build-navigator.py` só varre `Requisitos/*.md`, então a
-arquivada some do navegador automaticamente. `spec-lint` verifica essa convenção.
-
-> Estrutura **FLAT**: não há pastas `intencao/`, `contracts/`, `entities/`, `concepts/`
-> nem `analyses/`. A Visão e o catálogo de componentes ficam na raiz; os docs de feature
-> ficam em `Requisitos/`.
+Família `spec-to-html` — transforma a seção 7 num protótipo HTML navegável (sem backend),
+arquivo único que abre com duplo-clique: `spec-to-html` (índice), `-plano`, `-scaffold`,
+`-telas`, `-build`.
 
 ## Scripts
 
-Em `scripts/` — utilitários Python (3.11) que geram os artefatos navegáveis a partir
-do `refined/`. `<wiki>` é o diretório que contém `refined/`.
+Python 3.11+, sem dependência externa.
 
-- **`scripts/build-navigator.py <wiki>`** — varre a Camada de Intenção
-  (`visao.md`), os **transversais** (`modelo-dados.md`, `requisitos-transversais.md`,
-  `telas-comuns.md`, `componentes.md` — agrupados sob o submenu **Transversais**) e a Camada
-  de Requisitos (`Requisitos/<feature>.md`) e embute todo o conteúdo num único
-  `refined-navigator.html`, que abre com duplo-clique (sem servidor). Diagramas Mermaid
-  embutidos são renderizados. Se existir `refined/blueprint.md`, ele é renderizado como uma
-  tela de cadeia de valor dentro do navegador. Rodar: `python3 scripts/build-navigator.py <wiki>`. O navegador sai no
-  padrão visual EloGroup (azul institucional, fontes Outfit/Roboto Mono e logotipo
-  embutidos).
+- **`scripts/lint_critico.py <spec.md>`** — gate determinístico. 30 regras lidas de
+  `regras/criticas.toml`: forma EARS-PT, vocabulário proibido, singularidade, RF↔cenário,
+  cobertura de desvio, tetos por seção e global, RNF local, ID/link, Dados.
+  Flags: `--json`, `--ledger <dir>`, `--so-bloqueia`, `--regras <toml>`.
+  Exit `0` limpo · `1` só «corrige» · `2` há «bloqueia».
+- **`scripts/testa_lint.py`** — regressão do lint (5 asserções, nos dois formatos).
+- **`scripts/build-navigator.py <dir>`** — fatia o `spec.md` por seção e embute tudo num
+  `refined-navigator.html` offline, com Mermaid e wireframe renderizados.
 
-Rodar sempre que os `.md` do `refined/` mudarem — ou usar a skill
-`spec-navigator`, que faz isso.
+## Regras e configuração
+
+**`regras/criticas.toml`** é a fonte única: tetos, padrões EARS, vocabulário proibido,
+severidade de cada regra e as regras de julgamento dos críticos. Regra que não está lá não
+existe — nem o script nem o crítico inventam exigência. Severidade `off` desliga uma regra.
+
+## Wireframe e componentes
+
+Cada tela traz um bloco ` ```wireframe ` (DSL line-based) renderizado como SVG **fat
+marker, só-layout** — formas sem texto legível. Gramática em
+[`docs/CONVENCOES-V3.md`](docs/CONVENCOES-V3.md) e na skill `feature-telas-fluxos`.
+Componentes usam vocabulário genérico de front (toolbar, card, table, list, button, input,
+select, tabs, dialog, chart), agnóstico de framework — Anexo A da spec.
+
+## Compatibilidade com o wiki v2
+
+`lint_critico.py` e `build-navigator.py` aceitam os dois formatos: sem `spec.md`, procuram
+`refined/` com `visao.md` e `Requisitos/`. Wiki existente continua funcionando sem
+migração. Roteiro de migração e o que morreu do v2:
+[`docs/CONVENCOES-V3.md`](docs/CONVENCOES-V3.md).
 
 ## Documentos de referência
 
-Em `docs/` — material de apoio reutilizável.
+- **[`docs/CONVENCOES-V3.md`](docs/CONVENCOES-V3.md)** — o formato, o que morreu do v2, migração.
+- **[`docs/LOOP-CRITICO.md`](docs/LOOP-CRITICO.md)** — as duas camadas de crítica, ciclo, severidade, ledger, concisão.
+- **[`docs/referencias-v3.md`](docs/referencias-v3.md)** — dossiê externo (ISO/IEC/IEEE 29148, EARS, Wiegers, requirements smells, Specification by Example, *Insanely Simple*, Maeda, Shape Up, Google Technical Writing, Amazon PR/FAQ, GitHub Spec Kit) com a regra derivada de cada bloco.
+- **[`docs/checklist-levantamento-negocial.md`](docs/checklist-levantamento-negocial.md)** — grade de cobertura de levantamento de demanda negocial.
+- **[`docs/backlog-ajustes-metodologia.md`](docs/backlog-ajustes-metodologia.md)** — os 7 ajustes (M1–M7) achados na análise do Knowledge-MT.
+- **[`docs/CONVENCOES-V2.md`](docs/CONVENCOES-V2.md)** — convenções do v2 (histórico).
 
-- **`docs/CONVENCOES-V2.md`** — convenções da v2 (camadas, eixo, transversais, DSL de wireframe).
-- **`docs/checklist-levantamento-negocial.md`** — checklist de validação de uma spec de
-  **demanda negocial** (contexto/regras/fluxos sem solução técnica). Usado para auditar
-  contratos (`spec-audit`). O item *Integrações e sistemas envolvidos* é a origem
-  conceitual do **catálogo de Integrações** (seção `## Integrações`) do
-  `requisitos-transversais.md` — referenciado por cada feature numa linha na Cap. 2.3.
+## Exemplos
+
+`examples/lint/` — fixtures do lint, que também servem de referência de redação:
+
+| Arquivo | Para que serve |
+|---|---|
+| `spec-boa.md` | spec única que sai limpa no gate — 2 features, 9 seções, 2156 palavras |
+| `spec-ruim.md` | dispara as 20 regras de `esperado-spec-ruim.txt` |
+| `refined/` | wiki no formato v2, para a regressão do modo legado |

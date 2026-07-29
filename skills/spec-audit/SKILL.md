@@ -1,33 +1,50 @@
 ---
 name: spec-audit
-description: Use quando o usuário quer auditar a clareza de um documento da spec via CSD — levantar Certezas, Suposições e Dúvidas como perguntas acionáveis antes de avançar de camada.
+description: Use quando o usuário quer auditar a clareza do começo da spec (seções 1 a 3) pelo método CSD — Certezas, Suposições e Dúvidas — antes de escrever as features. Complementa o loop crítico, que cobre a seção 7.
 ---
 
 # spec-audit
 
-Lê um documento da spec (tipicamente da Camada de Intenção) e o audita pelo método **CSD — Certezas, Suposições e Dúvidas** — separando o que está firmado do que é inferência e do que falta, e transformando suposições e dúvidas em perguntas acionáveis para o usuário.
+Audita as **seções 1 a 3** do `spec.md` (contexto, glossário, regras) pelo método
+**CSD — Certezas, Suposições e Dúvidas**: separa o que está firmado do que é inferência e
+do que falta, e converte suposição e dúvida em pergunta acionável.
 
-Serve para **validar a clareza antes de avançar de camada** — por exemplo, conferir a Camada de Intenção antes de gerar a Camada de Requisitos.
+Serve para **validar o alicerce antes de escrever feature**. A crítica da seção 7 é do
+loop `spec-critico`; esta skill cobre o que vem antes dele.
 
-> **Artefato de referência:** ao auditar uma spec de **demanda negocial** (contexto/regras/fluxos, sem solução técnica), use o **[Checklist de Levantamento Negocial](../../docs/checklist-levantamento-negocial.md)** como grade de cobertura — em especial os itens de *Integrações e sistemas envolvidos* (seção 11), que alimentam o **catálogo de Integrações** (seção `## Integrações`) do `requisitos-transversais.md` — referenciado por cada feature numa linha única na Cap. 2.3.
+> **Grade de cobertura.** Ao auditar levantamento de demanda negocial (contexto, regras e
+> fluxos, sem solução técnica), usar o
+> [Checklist de Levantamento Negocial](../../docs/checklist-levantamento-negocial.md).
+> O item *Integrações e sistemas envolvidos* alimenta a §5.3 (catálogo de integrações).
 
 ## Quando usar
-Quando o usuário pede para auditar/revisar a spec, checar se a Camada de Intenção está sólida o bastante para seguir, gerar perguntas de refino, ou levantar o que ainda está em aberto.
+Quando o usuário pede para auditar ou revisar a spec, checar se o contexto está sólido o
+bastante para avançar, gerar perguntas de refino, ou levantar o que está em aberto.
 
 ## Entrada
-- O(s) documento(s) da spec a auditar — em geral a Visão em `refined/visao.md`, mas vale qualquer página do wiki.
-- Pode auditar um documento isolado ou a camada inteira.
+As seções 1 a 3 do `spec.md`. Pode auditar uma seção isolada ou as três.
 
 ## Processo
-1. Ler o(s) documento(s) alvo no `refined/`.
-2. Classificar cada afirmação relevante em três baldes:
-   - **Certezas** — afirmado com base na fonte, sem `*(inferência)*`, sem `⚠`. Listar para confirmar que o usuário concorda.
-   - **Suposições** — marcado `*(inferência)*` ou apoiado em fonte fraca/indireta. Cada uma vira uma pergunta de confirmação.
-   - **Dúvidas** — marcado `⚠ NÃO IDENTIFICADO` ou lacuna evidente. Cada uma vira uma pergunta aberta.
-3. Para cada Suposição e Dúvida, escrever uma **pergunta acionável** — específica, respondível, e que indique o documento/ID afetado.
-4. Apresentar o resultado como matriz CSD (Certezas / Suposições / Dúvidas), priorizando as perguntas que mais bloqueiam o avanço de camada.
-5. Anexar entrada em `refined/log.md` (`## [YYYY-MM-DD] audit | CSD de <documento>`). Se a matriz for extensa, salvar também uma página em `refined/_archive/`.
+1. Ler as seções 1 a 3.
+2. Classificar cada afirmação relevante:
+   - **Certeza** — afirmada com fonte citada, sem `*(inferência)*`, sem `⚠`. Listar para
+     o usuário confirmar.
+   - **Suposição** — marcada `*(inferência)*` ou apoiada em fonte indireta. Vira pergunta
+     de confirmação.
+   - **Dúvida** — marcada `⚠ NÃO IDENTIFICADO` ou lacuna evidente. Vira pergunta aberta.
+3. Cada suposição e dúvida vira **pergunta acionável**: específica, respondível, citando a
+   seção e o ID afetados (`§3, RN-07`).
+4. Verificações próprias destas seções:
+   - Objetivo (§1.2) é verificável? dá para saber quando o negócio considera atendido?
+   - Todo termo usado da §4 em diante está no Glossário (§2)?
+   - Toda `RN-NN` tem fonte (documento + seção, ou interlocutor + data)?
+   - Alguma `RN` descreve *como implementar* (tela, classe, método) em vez do *o quê*?
+   - `RN-AI-NN` é de fato não-determinística, ou é regra determinística disfarçada?
+5. Apresentar a matriz CSD, priorizando as perguntas que mais travam o avanço.
+6. Registrar as dúvidas que sobrarem na **seção 8** (Questões em aberto) do `spec.md`, com
+   o marcador `⚠ NÃO IDENTIFICADO — definir: <pergunta>`.
 
 ## Saída
-- Uma matriz CSD com Certezas listadas e Suposições/Dúvidas convertidas em perguntas acionáveis priorizadas.
-- Entrada de `audit` no `log.md`; opcionalmente uma página em `refined/_archive/` quando o relatório for grande.
+Matriz CSD com as certezas listadas e as suposições/dúvidas convertidas em perguntas
+acionáveis priorizadas, mais a seção 8 do `spec.md` atualizada. Relatório longo vai em
+arquivo (`criticas/csd-<data>.md`), não no chat.

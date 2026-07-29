@@ -1,0 +1,22 @@
+# Regras que spec-ruim.md (formato spec único) deve disparar.
+# Os tetos por seção e o teto global (R08, R09) são testados no 5º caso de testa_lint.py.
+R01  RF fora do padrão EARS-PT
+R02  RF com duas capacidades
+R03  vocabulário proibido
+R04  RF no negativo
+F01  nenhum RF de comportamento indesejado
+F02  fluxo sem decisão
+F03  sem diagrama de navegação
+F04  desvio canônico não endereçado
+S02  tela sem arquétipo
+S05  tela sem wireframe
+S06  feature sem linha de metadados (eixo / apetite / fora desta feature)
+N02  nenhum RNF-T citado
+T01  RF sem cenário
+T02  cenário sem RF-pai
+T04  nenhum cenário de exceção
+X03  ID citado inexistente (resolvido pela seção de regras)
+D01  entidade canônica remodelada
+D02  Dados sem referência ao modelo canônico
+D03  campo sem tipo
+D04  detalhe técnico em Dados

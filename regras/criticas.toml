@@ -1,0 +1,226 @@
+## Regras do loop crítico — fonte única de verdade
+#
+# Lida por `scripts/lint_critico.py` (determinístico) E pelos agentes críticos
+# (`skills/critico-*/SKILL.md`). Regra que não está aqui não existe: nem o script
+# nem o crítico devem inventar exigência.
+#
+# Origem de cada bloco: `docs/referencias-v3.md`.
+# Severidade: "bloqueia" (exit 2, gate fecha) | "corrige" (exit 1, precisa tratar
+# ou justificar) | "off" (desligada).
+
+[meta]
+versao = "3.0.0"
+rodadas_max = 2          # Think Motion: loop tem fim, não roda até "ficar bom"
+
+# ---------------------------------------------------------------------------
+# Tetos duros. Estourou o teto? corta o conteúdo — não aumenta o teto.
+# Origem: Insanely Simple (Think Minimal/Phrasal), Maeda (Reduce/SHE),
+# Amazon six-pager, orçamento de contexto.
+# ---------------------------------------------------------------------------
+#
+# Calibrados no corpus real de 14 features (knowledge_cob) + na fixture EARS-nativa
+# `examples/lint/refined/Requisitos/feature-boa.md`, que cobre 9 RF / 9 cenários /
+# 3 telas em 1106 palavras. Critério: teto ≈ mediana do corpus, para que a metade
+# mais gorda tenha de cortar. Teto acima do máximo do corpus não verifica nada.
+#
+#                        corpus p50 / máx   ·  fixture EARS máx
+# secoes.feature              2667 / 3351   ·   1106
+# rf_por_feature                 13 / 18     ·      9
+# telas_por_feature               4 / 5      ·      3
+# palavras_por_rf                 8 / 23     ·     19   (EARS-PT é mais longo por RF
+#                                                        e mais curto por feature)
+# palavras_por_cenario           41 / 80     ·     44
+[tetos]
+palavras_por_rf = 20
+telas_por_feature = 5
+rf_por_feature = 14
+palavras_por_cenario = 50
+palavras_por_spec = 20000       # teto global do spec.md — orçamento de contexto
+similaridade_duplicata = 0.80   # Jaccard de tokens p/ detectar RF duplicado no transversal
+similaridade_cenario = 0.70     # Jaccard entre o «Então» do cenário e o RF que ele verifica
+
+# Teto de palavras por seção do `spec.md`. `0` = sem teto (seção que é tabela de
+# domínio, onde volume é conteúdo e não prosa).
+# Medido no wiki knowledge_cob antes da consolidação: Visão 15.086 palavras,
+# modelo de dados 3.692, transversais 1.920, arquétipos 1.996. Num documento único
+# isso é o que faz a spec deixar de caber num contexto de trabalho — daí os tetos.
+# A chave casa pelo TÍTULO da seção (`contexto`, `glossário`, `regras`, …).
+[tetos.secoes]
+contexto = 900
+glossario = 0
+regras = 0
+modelo_dados = 1200
+transversais = 1400
+arquetipos = 1400
+feature = 2200
+
+# ---------------------------------------------------------------------------
+# EARS-PT — sintaxe obrigatória de requisito funcional.
+# Origem: Mavin et al., RE'09. Ruleset: 0..n precondições, 0..1 gatilho,
+# 1 nome de sistema, 1..n respostas.
+# Regex aplicado ao enunciado em minúsculas. Ordem de classificação = ordem daqui.
+# ---------------------------------------------------------------------------
+[ears]
+verbo = "deve|deverá"
+
+[ears.padroes]
+composto   = '^enquanto\s+.+?,\s*quando\s+.+?,\s*.+?\s+(?:deve|deverá)\s+\S+'
+estado     = '^enquanto\s+.+?,\s*.+?\s+(?:deve|deverá)\s+\S+'
+evento     = '^quando\s+.+?,\s*.+?\s+(?:deve|deverá)\s+\S+'
+opcional   = '^onde\s+.+?,\s*.+?\s+(?:deve|deverá)\s+\S+'
+indesejado = '^se\s+.+?,\s*(?:então\s+)?.+?\s+(?:deve|deverá)\s+\S+'
+ubiquo     = '^(?!enquanto\b|quando\b|onde\b|se\b).+?\s+(?:deve|deverá)\s+\S+'
+
+# ---------------------------------------------------------------------------
+# Vocabulário proibido em RF.
+# Origem: Wiegers (palavras fracas) + Femmer et al. (requirements smells).
+# Cada lista é uma classe de smell; o achado cita a classe.
+# ---------------------------------------------------------------------------
+[vocabulario]
+subjetivo = [
+  "amigável", "intuitivo", "fácil", "simples", "robusto", "flexível",
+  "adequado", "apropriado", "relevante", "razoável", "satisfatório",
+  "confortável", "moderno", "similar", "equivalente",
+]
+nao_verificavel = [
+  "eficiente", "otimizado", "otimizada", "performático", "escalável",
+  "rápido", "rápida", "ágil", "suficiente", "tempo real", "de forma segura",
+  "de forma eficiente", "com qualidade",
+]
+brecha = [
+  "se possível", "quando aplicável", "se necessário", "conforme necessário",
+  "quando pertinente", "sempre que possível", "entre outros", "etc",
+  "e assim por diante", "dentre outros", "se aplicável",
+]
+comparativo_superlativo = [
+  "o mais", "a mais", "melhor que", "pior que", "o máximo", "o mínimo",
+  "maximizar", "minimizar", "o menor possível", "o maior possível",
+]
+quantificador_vago = [
+  "vários", "várias", "diversos", "diversas", "alguns", "algumas",
+  "muitos", "muitas", "grande volume", "significativo", "significativa",
+  "quase sempre", "geralmente", "normalmente", "aproximadamente",
+]
+verbo_oco = [
+  "suportar", "apoiar", "dar suporte", "contemplar", "atender a",
+  "gerenciar", "tratar", "lidar com", "prover", "possibilitar",
+  "disponibilizar de forma", "garantir a",
+]
+pronome_vago = [
+  "o mesmo", "a mesma", "os mesmos", "as mesmas", "isso", "isto", "aquilo",
+]
+referencia_incompleta = [
+  "ver documentação", "conforme documentado", "conforme definido",
+  "a definir", "a ser definido", "conforme padrão",
+]
+
+# Marcador oficial de lacuna. Presente = honesto; ausente + RF vago = erro.
+marcador_lacuna = "⚠ NÃO IDENTIFICADO"
+
+# Voz passiva (Google Tech Writing: voz ativa, "quem faz o que a quem").
+passiva = '\b(é|são|será|serão|foi|foram|seja|sejam)\s+\w+(ado|ada|ados|adas|ido|ida|idos|idas)\b'
+
+# Sinais de exceção — usados p/ medir cobertura de desvio em cenário e fluxo.
+# Origem: EARS padrão #5 + backlog M2 (desvios canônicos).
+sinais_excecao = [
+  "falha", "falhar", "inválido", "inválida", "ausente", "indisponível",
+  "bloqueado", "bloqueada", "erro", "timeout", "expirado", "negado",
+  "recusado", "duplicado", "concorrência", "conflito", "limite excedido",
+  "sem permissão", "não encontrado", "parcial", "retomada", "idempot",
+]
+desvios_canonicos = ["timeout", "parcial", "concorr", "idempot"]
+
+# Proibido no capítulo de Dados (modelo conceitual, não técnico).
+# Token único = casamento por palavra; frase = substring.
+proibido_dados = [
+  "endpoint", "http://", "https://", "rest", "graphql", "swagger", "openapi",
+  "json schema", "create table", "varchar", "select", "insert", "update",
+  "delete", "foreign key", "primary key", "índice btree",
+]
+
+# ---------------------------------------------------------------------------
+# Regras. `id` é o que aparece no achado e no ledger de críticas.
+# `critico` = qual agente é dono do julgamento quando o script não decide.
+# ---------------------------------------------------------------------------
+[regras]
+
+# --- Redação / forma (critico-redacao) -------------------------------------
+R01 = { severidade = "bloqueia", critico = "critico-redacao", desc = "RF não casa nenhum padrão EARS-PT" }
+R02 = { severidade = "bloqueia", critico = "critico-redacao", desc = "RF não singular — mais de uma capacidade na mesma frase" }
+R03 = { severidade = "bloqueia", critico = "critico-redacao", desc = "RF usa vocabulário proibido (smell)" }
+R04 = { severidade = "corrige", critico = "critico-redacao", desc = "RF enunciado no negativo — reformular como padrão #5" }
+R05 = { severidade = "corrige", critico = "critico-redacao", desc = "RF acima do teto de palavras" }
+R06 = { severidade = "corrige", critico = "critico-redacao", desc = "feature acima do teto de palavras" }
+R07 = { severidade = "corrige", critico = "critico-redacao", desc = "voz passiva em RF" }
+R08 = { severidade = "corrige", critico = "critico-redacao", desc = "seção comum acima do teto de palavras" }
+R09 = { severidade = "corrige", critico = "critico-redacao", desc = "spec acima do teto global de palavras" }
+
+# --- Testabilidade (critico-testabilidade) ---------------------------------
+T01 = { severidade = "bloqueia", critico = "critico-testabilidade", desc = "RF sem cenário de teste que o verifique" }
+T02 = { severidade = "bloqueia", critico = "critico-testabilidade", desc = "cenário sem RF-pai declarado" }
+T03 = { severidade = "bloqueia", critico = "critico-testabilidade", desc = "cenário sem estrutura Dado/Quando/Então" }
+T04 = { severidade = "corrige", critico = "critico-testabilidade", desc = "feature sem nenhum cenário de exceção/borda" }
+T05 = { severidade = "corrige", critico = "critico-testabilidade", desc = "cenário só reescreve o RF (não é key example)" }
+T06 = { severidade = "corrige", critico = "critico-testabilidade", desc = "cenário acima do teto de palavras" }
+
+# --- Fluxo e desvio (critico-fluxos) ---------------------------------------
+F01 = { severidade = "bloqueia", critico = "critico-fluxos", desc = "feature sem RF de comportamento indesejado (padrão #5)" }
+F02 = { severidade = "corrige", critico = "critico-fluxos", desc = "fluxo 1.1 sem nó de decisão" }
+F03 = { severidade = "bloqueia", critico = "critico-fluxos", desc = "sem diagrama de navegação (1.3)" }
+F04 = { severidade = "corrige", critico = "critico-fluxos", desc = "desvio canônico não endereçado (timeout / parcial / concorrência / idempotência)" }
+
+# --- Simplicidade (critico-simplicidade) -----------------------------------
+S01 = { severidade = "corrige", critico = "critico-simplicidade", desc = "telas acima do teto da feature" }
+S02 = { severidade = "bloqueia", critico = "critico-simplicidade", desc = "tela sem arquétipo declarado" }
+S03 = { severidade = "corrige", critico = "critico-simplicidade", desc = "RF acima do teto da feature" }
+S04 = { severidade = "bloqueia", critico = "critico-simplicidade", desc = "RF duplica requisito transversal existente" }
+S05 = { severidade = "corrige", critico = "critico-simplicidade", desc = "tela sem bloco wireframe" }
+S06 = { severidade = "corrige", critico = "critico-simplicidade", desc = "feature sem linha de metadados (eixo / apetite / fora desta feature)" }
+
+# --- Não-funcional: só transversal, citado por ID --------------------------
+N01 = { severidade = "bloqueia", critico = "critico-rastreabilidade", desc = "RNF local na feature — RNF vive só no transversal, citado por ID" }
+N02 = { severidade = "corrige", critico = "critico-rastreabilidade", desc = "feature não cita nenhum RNF-T-* aplicável" }
+
+# --- Rastreabilidade / auditabilidade (critico-rastreabilidade) ------------
+X01 = { severidade = "corrige", critico = "critico-rastreabilidade", desc = "RF sem regra de negócio ou referência de origem" }
+X02 = { severidade = "bloqueia", critico = "critico-rastreabilidade", desc = "ID duplicado no mesmo documento" }
+X03 = { severidade = "bloqueia", critico = "critico-rastreabilidade", desc = "ID citado não existe na fonte" }
+X04 = { severidade = "bloqueia", critico = "critico-rastreabilidade", desc = "link relativo quebrado" }
+
+# --- Dados (critico-dados) -------------------------------------------------
+D01 = { severidade = "bloqueia", critico = "critico-dados", desc = "entidade canônica remodelada como entidade própria" }
+D02 = { severidade = "corrige", critico = "critico-dados", desc = "capítulo 3 sem entidade canônica referenciada" }
+D03 = { severidade = "corrige", critico = "critico-dados", desc = "campo de entidade própria sem tipo" }
+D04 = { severidade = "bloqueia", critico = "critico-dados", desc = "detalhe técnico (endpoint / SQL / HTTP) no capítulo de Dados" }
+
+# ---------------------------------------------------------------------------
+# Regras de julgamento. O script não decide — o agente crítico decide e assina.
+# Mesmo formato de achado; entram no mesmo ledger. Regra fora desta lista não
+# existe: o crítico não inventa exigência.
+# ---------------------------------------------------------------------------
+[julgamento]
+
+"J-RED-01" = { severidade = "bloqueia", critico = "critico-redacao", desc = "enunciado admite duas leituras — apontar as duas" }
+"J-RED-02" = { severidade = "corrige", critico = "critico-redacao", desc = "termo fora do Glossário ou usado com dois sentidos no doc" }
+"J-RED-03" = { severidade = "corrige", critico = "critico-redacao", desc = "prosa repete o que outro capítulo já diz" }
+
+"J-TST-01" = { severidade = "bloqueia", critico = "critico-testabilidade", desc = "cenário não prova o RF que declara verificar" }
+"J-TST-02" = { severidade = "corrige", critico = "critico-testabilidade", desc = "falta o key example do limite da regra (fronteira)" }
+"J-TST-03" = { severidade = "bloqueia", critico = "critico-testabilidade", desc = "resultado esperado não é observável" }
+
+"J-SMP-01" = { severidade = "corrige", critico = "critico-simplicidade", desc = "telas fundíveis em aba/drawer/painel" }
+"J-SMP-02" = { severidade = "bloqueia", critico = "critico-simplicidade", desc = "RF descreve implementação, não capacidade" }
+"J-SMP-03" = { severidade = "corrige", critico = "critico-simplicidade", desc = "escopo excede o problema declarado na Visão" }
+"J-SMP-04" = { severidade = "corrige", critico = "critico-simplicidade", desc = "conceito novo duplica conceito existente no wiki" }
+
+"J-FLX-01" = { severidade = "bloqueia", critico = "critico-fluxos", desc = "desvio plausível do fluxo não modelado" }
+"J-FLX-02" = { severidade = "bloqueia", critico = "critico-fluxos", desc = "fluxo contradiz um RF" }
+"J-FLX-03" = { severidade = "corrige", critico = "critico-fluxos", desc = "tela ou estado inalcançável pelo fluxo" }
+
+"J-DAD-01" = { severidade = "corrige", critico = "critico-dados", desc = "entidade própria deveria ser canônica (aparece em ≥2 features)" }
+"J-DAD-02" = { severidade = "bloqueia", critico = "critico-dados", desc = "campo sem fonte da verdade declarada" }
+"J-DAD-03" = { severidade = "bloqueia", critico = "critico-dados", desc = "modelo de dados não sustenta um RF do capítulo 2" }
+
+"J-RAS-01" = { severidade = "bloqueia", critico = "critico-rastreabilidade", desc = "rastreio falso — a RN citada não justifica o RF" }
+"J-RAS-02" = { severidade = "corrige", critico = "critico-rastreabilidade", desc = "mesmo fato afirmado em dois lugares do wiki" }
+"J-RAS-03" = { severidade = "corrige", critico = "critico-rastreabilidade", desc = "afirmação de negócio sem fonte citada" }

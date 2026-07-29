@@ -1,12 +1,12 @@
 ---
 name: spec-to-html-telas
-description: Use na fase de telas de um protótipo HTML navegável — gera um partial screens/NN-nome.html por tela da tabela validada, a partir do bloco de telas detalhadas da Camada de Requisitos.
+description: Use na fase de telas de um protótipo HTML navegável — gera um partial screens/NN-nome.html por tela da tabela validada, a partir do bloco de telas detalhadas da seção 7 (Features).
 ---
 
 # spec-to-html-telas
 
 Terceira fase da geração de um protótipo HTML navegável. Gera **uma tela por
-partial** em `screens/`, a partir da Camada de Requisitos.
+partial** em `screens/`, a partir da seção 7 (Features).
 
 Faz parte da família `spec-to-html`. Roda depois de `spec-to-html-scaffold` e antes
 de `spec-to-html-build`. Abre o segundo checkpoint: as telas devem ser validadas
@@ -17,8 +17,8 @@ Depois que `spec-to-html-scaffold` escreveu o esqueleto do protótipo.
 
 ## Entrada
 - A tabela de telas validada em `spec-to-html-plano`.
-- Por tela, a subseção `### 1.2 Telas detalhadas` do Cap. 1 do `Requisitos/<feature>.md` da feature-fonte.
-- O ponteiro `refined/componentes.md` para os componentes genéricos referenciados (campo **Componentes:** + bloco ` ```wireframe ` de cada tela).
+- Por tela, a subseção 7.N.2 (Telas) da feature-fonte.
+- O Anexo A (componentes) para os nomes genéricos referenciados (campo **Componentes:** + bloco ` ```wireframe ` de cada tela).
 
 ## Processo
 1. Para cada linha da tabela de telas, criar `screens/NN-nome.html` — `NN` é a ordem
@@ -28,7 +28,7 @@ Depois que `spec-to-html-scaffold` escreveu o esqueleto do protótipo.
    construída a partir da subseção `### 1.2 Telas detalhadas` da feature-fonte: objetivo,
    conteúdo, ações, estados, navegação, o bloco ` ```wireframe ` e os componentes
    referenciados pelo nome genérico (campo **Componentes:**, vocabulário em
-   `componentes.md`).
+   Anexo A).
 3. **Densidade e fluxo (Princípios transversais em `spec-to-html`) — aplicar em cada tela:**
    - **Abrir com dado, não com texto.** O cabeçalho é `eyebrow` + `<h1>` curto; **sem
      subtítulo que narra a tela** ("parece slide"), sem banner de ensino, sem `RN`/`RNF`

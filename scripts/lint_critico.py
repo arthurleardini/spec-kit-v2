@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """Lint crítico determinístico do spec-kit — gate do loop crítico.
 
-Verifica o que dá para verificar por script num doc de feature
-(`refined/Requisitos/<feature>.md`): forma EARS-PT do RF, vocabulário proibido,
-singularidade, RF↔cenário, cobertura de desvio, tetos de tamanho, RNF local,
+Dois formatos de entrada:
+
+- **spec único** (v3) — um `spec.md` por produto, com a seção `## 7. Features` e uma
+  subseção por feature. É o formato preferido: uma spec, não um wiki.
+- **wiki legado** (v2) — `refined/visao.md` + transversais na raiz +
+  `refined/Requisitos/<feature>.md`. Suportado para não quebrar os wikis existentes.
+
+Verifica o que dá para verificar por script: forma EARS-PT do RF, vocabulário proibido,
+singularidade, RF↔cenário, cobertura de desvio, tetos por seção e global, RNF local,
 rastreabilidade de ID/link e capítulo de Dados.
 
 Regras e listas vêm de `regras/criticas.toml` — não há regra hardcoded aqui.
 
 Uso:
-    python3 scripts/lint_critico.py <wiki>/refined
-    python3 scripts/lint_critico.py refined/Requisitos/minha-feature.md
-    python3 scripts/lint_critico.py refined --json
-    python3 scripts/lint_critico.py refined --ledger criticas/
+    python3 scripts/lint_critico.py caminho/spec.md
+    python3 scripts/lint_critico.py caminho/refined            # wiki legado
+    python3 scripts/lint_critico.py caminho/spec.md --json --ledger criticas/
 
 Exit codes:  0 = limpo · 1 = só achados "corrige" · 2 = há achado "bloqueia"
 """
@@ -25,7 +30,8 @@ import json
 import re
 import sys
 import tomllib
-from dataclasses import dataclass, asdict
+import unicodedata
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 
 EXIT_LIMPO, EXIT_CORRIGE, EXIT_BLOQUEIA = 0, 1, 2
@@ -37,6 +43,16 @@ STOPWORDS = {
     "a", "à", "ao", "aos", "as", "às", "com", "como", "da", "das", "de", "do",
     "dos", "e", "em", "na", "nas", "no", "nos", "o", "os", "ou", "para", "por",
     "que", "se", "sem", "um", "uma", "deve", "deverá", "ser", "the",
+}
+
+# Título de seção → chave de teto em [tetos.secoes].
+CHAVES_SECAO = {
+    "contexto": ("contexto",),
+    "glossario": ("glossario",),
+    "regras": ("regras",),
+    "modelo_dados": ("modelo de dados",),
+    "transversais": ("transversais",),
+    "arquetipos": ("arquetipo", "telas comuns"),
 }
 
 
@@ -62,6 +78,11 @@ class Achado:
 # ---------------------------------------------------------------------------
 # Utilidades de texto
 # ---------------------------------------------------------------------------
+def sem_acento(txt: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFD", txt)
+                   if unicodedata.category(c) != "Mn")
+
+
 def tokens(txt: str) -> set[str]:
     brutos = re.findall(r"[0-9a-zà-ÿ]+", txt.lower())
     return {t for t in brutos if t not in STOPWORDS and len(t) > 2}
@@ -84,6 +105,10 @@ def sem_blocos_codigo(linhas: list[str]) -> list[str]:
         if not dentro:
             fora.append(ln)
     return fora
+
+
+def conta_palavras(linhas: list[str]) -> int:
+    return sum(len(ln.split()) for ln in sem_blocos_codigo(linhas))
 
 
 def _variante_padding(cid: str, definidos: set[str]) -> str | None:
@@ -109,17 +134,77 @@ def contem_termo(txt: str, termo: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Parsing do documento
+# Índice de seções
 # ---------------------------------------------------------------------------
-RE_RF_LINHA = re.compile(r"^\s*\|\s*(RF-\d+)\s*\|")
-RE_CT_TITULO = re.compile(r"^####\s*(CT-\d+)\s*[—–-]\s*(.*)$")
-RE_TELA_TITULO = re.compile(r"^####\s+(?!CT-)(\S+)\s*[—–-]\s*(.*)$")
+RE_HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
+
+
+@dataclass
+class Secao:
+    nivel: int
+    titulo: str
+    ini: int          # índice da linha do heading (0-based)
+    fim: int          # índice exclusivo do fim do bloco
+
+    @property
+    def rotulo(self) -> str:
+        """Título sem a numeração (`7.1 Régua` → `Régua`)."""
+        return re.sub(r"^[\d.]+\s*", "", self.titulo).strip()
+
+    @property
+    def chave(self) -> str | None:
+        t = sem_acento(self.rotulo.lower())
+        for chave, termos in CHAVES_SECAO.items():
+            if any(x in t for x in termos):
+                return chave
+        return None
+
+
+def indexa_secoes(linhas: list[str]) -> list[Secao]:
+    brutas: list[Secao] = []
+    dentro_codigo = False
+    for i, ln in enumerate(linhas):
+        if ln.lstrip().startswith("```"):
+            dentro_codigo = not dentro_codigo
+            continue
+        if dentro_codigo:
+            continue
+        if m := RE_HEADING.match(ln):
+            brutas.append(Secao(len(m.group(1)), m.group(2), i, len(linhas)))
+    for idx, s in enumerate(brutas):
+        for prox in brutas[idx + 1:]:
+            if prox.nivel <= s.nivel:
+                s.fim = prox.ini
+                break
+    return brutas
+
+
+def filhas(secoes: list[Secao], pai: Secao, nivel: int | None = None) -> list[Secao]:
+    alvo = nivel if nivel is not None else pai.nivel + 1
+    return [s for s in secoes if pai.ini < s.ini < pai.fim and s.nivel == alvo]
+
+
+def acha_secao(secoes: list[Secao], *termos: str, dentro: Secao | None = None,
+               nivel: int | None = None) -> Secao | None:
+    for s in secoes:
+        if dentro is not None and not (dentro.ini < s.ini < dentro.fim):
+            continue
+        if nivel is not None and s.nivel != nivel:
+            continue
+        t = sem_acento(s.rotulo.lower())
+        if any(sem_acento(x.lower()) in t for x in termos):
+            return s
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Estruturas do documento
+# ---------------------------------------------------------------------------
+RE_ID_TELA = re.compile(r"^T-?\d+$")
+RE_ID_CT = re.compile(r"^CT-?\d+$")
 RE_ARQUETIPO = re.compile(r"\*\*Arquétipo:\*\*\s*(\S+)")
-RE_RNF_LOCAL_DEF = re.compile(r"^\s*[-*]\s*\*\*(RNF-(?!T-)[A-ZÀ-Ý]+-\d+)\*\*")
-RE_ENTIDADE_PROPRIA = re.compile(r"^####\s+(.+?)\s*(?:<!--|$)")
+RE_RNF_LOCAL_DEF = re.compile(r"^\s*[-*|]\s*\**(RNF-(?!T-)[A-ZÀ-Ý]+-\d+)\**")
 RE_LINK_MD = re.compile(r"\]\(([^)#\s]+\.md)")
-RE_H2 = re.compile(r"^##\s+(.*)$")
-RE_H3 = re.compile(r"^###\s+(.*)$")
 
 IDS_CITAVEIS = {
     "RN": re.compile(r"\bRN-\d+\b"),
@@ -160,25 +245,48 @@ class Tela:
 
 @dataclass
 class Doc:
+    """Uma feature — seção `7.N` no spec único, ou o arquivo inteiro no wiki legado."""
     caminho: Path
-    linhas: list[str]
-    frontmatter: dict
-    rfs: list[RF]
-    cts: list[CT]
-    telas: list[Tela]
-    rnf_locais: list[tuple[str, int]]
-    mermaids: list[tuple[str, str]]          # (secao, conteudo)
-    entidades_proprias: list[tuple[str, int]]
-    campos_sem_tipo: list[tuple[str, int]]
-    links: list[tuple[str, int]]
-    ids_citados: dict[str, set[str]]
-    cap3_texto: str
-    cap3_inicio: int
-    referencia_canonica: bool
+    nome: str
+    linhas: list[str]                 # fatia da feature
+    offset: int                       # linha absoluta (0-based) onde a fatia começa
+    metadados: str                    # linha «**Eixo:** … **Apetite:** …» ou frontmatter
+    rfs: list[RF] = field(default_factory=list)
+    cts: list[CT] = field(default_factory=list)
+    telas: list[Tela] = field(default_factory=list)
+    rnf_locais: list[tuple[str, int]] = field(default_factory=list)
+    mermaids: list[tuple[str, str]] = field(default_factory=list)   # (tipo, corpo)
+    entidades_proprias: list[tuple[str, int]] = field(default_factory=list)
+    campos_sem_tipo: list[tuple[str, int]] = field(default_factory=list)
+    links: list[tuple[str, int]] = field(default_factory=list)
+    ids_citados: dict[str, set[str]] = field(default_factory=dict)
+    dados_texto: str = ""
+    dados_linha: int = 1
+    referencia_canonica: bool = False
+    palavras: int = 0
+
+
+@dataclass
+class Contexto:
+    ids_definidos: dict[str, set[str]] = field(default_factory=dict)
+    transversais: dict[str, str] = field(default_factory=dict)
+    entidades_canonicas: set[str] = field(default_factory=set)
+
+
+@dataclass
+class Spec:
+    caminho: Path
+    modo: str                          # "spec" | "legado"
+    contexto: Contexto
+    features: list[Doc]
+    secoes_comuns: list[tuple[str, str, int, int]]   # (chave, titulo, linha, palavras)
     palavras: int
 
 
-def _frontmatter(linhas: list[str]) -> dict:
+# ---------------------------------------------------------------------------
+# Parsing
+# ---------------------------------------------------------------------------
+def _frontmatter_dict(linhas: list[str]) -> dict:
     if not linhas or linhas[0].strip() != "---":
         return {}
     fim = next((i for i, ln in enumerate(linhas[1:], 1) if ln.strip() == "---"), None)
@@ -193,7 +301,7 @@ def _frontmatter(linhas: list[str]) -> dict:
 
 
 def _tabelas(linhas: list[str]) -> list[tuple[int, list[str], list[list[str]]]]:
-    """Devolve (linha_inicial, cabecalho, linhas_de_dados) de cada tabela markdown."""
+    """Devolve (índice da 1ª linha, cabeçalho, linhas de dados) de cada tabela markdown."""
     saida, i = [], 0
     while i < len(linhas):
         if linhas[i].lstrip().startswith("|"):
@@ -219,27 +327,24 @@ def _idx_coluna(cab: list[str], *chaves: str) -> int | None:
     return None
 
 
-def _secao_de(linha_idx: int, marcos: list[tuple[int, str]]) -> str:
-    atual = ""
-    for idx, titulo in marcos:
-        if idx <= linha_idx:
-            atual = titulo
-        else:
-            break
-    return atual
+def _tipo_mermaid(corpo: str) -> str:
+    """Classifica pelo conteúdo, não pelo título — funciona nos dois formatos."""
+    if "erDiagram" in corpo:
+        return "er"
+    if re.search(r"\bT-?\d+\b", corpo):
+        return "navegacao"
+    return "fluxo"
 
 
-def parse_doc(caminho: Path) -> Doc:
-    texto = caminho.read_text(encoding="utf-8")
-    linhas = texto.splitlines()
-    fm = _frontmatter(linhas)
+def _doc_da_fatia(caminho: Path, todas: list[str], ini: int, fim: int, nome: str,
+                  metadados: str) -> Doc:
+    linhas = todas[ini:fim]
+    secoes = indexa_secoes(linhas)
+    d = Doc(caminho=caminho, nome=nome, linhas=linhas, offset=ini, metadados=metadados)
+    L = lambda i: ini + i + 1          # noqa: E731  índice local → linha 1-based absoluta
 
-    marcos_h2 = [(i, m.group(1)) for i, ln in enumerate(linhas) if (m := RE_H2.match(ln))]
-    marcos_h3 = [(i, m.group(1)) for i, ln in enumerate(linhas) if (m := RE_H3.match(ln))]
-
-    # --- RF (tabela dentro do cap. 2) --------------------------------------
-    rfs: list[RF] = []
-    for ini, cab, dados in _tabelas(linhas):
+    # --- RF ---------------------------------------------------------------
+    for t_ini, cab, dados in _tabelas(linhas):
         i_id = _idx_coluna(cab, "id")
         i_en = _idx_coluna(cab, "enunciado", "requisito")
         if i_id is None or i_en is None:
@@ -249,144 +354,129 @@ def parse_doc(caminho: Path) -> Doc:
         for off, cels in enumerate(dados):
             if i_id >= len(cels) or not re.fullmatch(r"RF-\d+", cels[i_id]):
                 continue
-            rfs.append(RF(
+            d.rfs.append(RF(
                 id=cels[i_id],
                 enunciado=cels[i_en] if i_en < len(cels) else "",
                 prioridade=cels[i_pr] if i_pr is not None and i_pr < len(cels) else "",
                 refs=cels[i_rf] if i_rf is not None and i_rf < len(cels) else "",
-                linha=ini + 3 + off,
+                linha=L(t_ini + 2 + off),
             ))
 
-    # --- Cenários de teste --------------------------------------------------
-    cts: list[CT] = []
-    for i, ln in enumerate(linhas):
-        m = RE_CT_TITULO.match(ln)
-        if not m:
-            continue
-        corpo = []
-        for nxt in linhas[i + 1:]:
-            if nxt.startswith(("####", "###", "##")):
-                break
-            corpo.append(nxt)
-        corpo_txt = "\n".join(corpo)
-        cts.append(CT(
-            id=m.group(1),
-            titulo=m.group(2),
-            corpo=corpo_txt,
-            rfs=sorted(set(re.findall(r"\b(?:RF-T-\d+|RF-\d+|RNF-T-[A-ZÀ-Ý]+-\d+)\b",
-                                      m.group(2) + " " + corpo_txt))),
-            linha=i + 1,
-        ))
+    # --- Telas e cenários: detectados pelo ID no heading ------------------
+    for s in secoes:
+        m = re.match(r"^(\S+)\s*[—–-]\s*(.*)$", s.rotulo)
+        ident, resto = (m.group(1), m.group(2)) if m else (s.rotulo.strip(), "")
+        bloco = "\n".join(linhas[s.ini + 1:s.fim])
+        if RE_ID_CT.match(ident):
+            d.cts.append(CT(
+                id=ident, titulo=resto, corpo=bloco,
+                rfs=sorted(set(re.findall(
+                    r"\b(?:RF-T-\d+|RF-\d+|RNF-T-[A-ZÀ-Ý]+-\d+)\b", resto + " " + bloco))),
+                linha=L(s.ini),
+            ))
+        elif RE_ID_TELA.match(ident):
+            arq = RE_ARQUETIPO.search(bloco)
+            d.telas.append(Tela(
+                id=ident, nome=resto,
+                arquetipo=(arq.group(1) if arq else ""),
+                tem_wireframe="```wireframe" in bloco,
+                linha=L(s.ini),
+            ))
 
-    # --- Telas (cap. 1) -----------------------------------------------------
-    telas: list[Tela] = []
-    for i, ln in enumerate(linhas):
-        m = RE_TELA_TITULO.match(ln)
-        if not m:
-            continue
-        if not _secao_de(i, marcos_h2).startswith("1."):
-            continue
-        bloco = []
-        for nxt in linhas[i + 1:]:
-            if nxt.startswith(("####", "###", "##")):
-                break
-            bloco.append(nxt)
-        bloco_txt = "\n".join(bloco)
-        arq = RE_ARQUETIPO.search(bloco_txt)
-        telas.append(Tela(
-            id=m.group(1),
-            nome=m.group(2),
-            arquetipo=(arq.group(1) if arq else ""),
-            tem_wireframe="```wireframe" in bloco_txt,
-            linha=i + 1,
-        ))
+    # --- RNF local, mermaid, links, IDs ----------------------------------
+    d.rnf_locais = [(m.group(1), L(i)) for i, ln in enumerate(linhas)
+                    if (m := RE_RNF_LOCAL_DEF.match(ln))]
 
-    # --- RNF local ----------------------------------------------------------
-    rnf_locais = [(m.group(1), i + 1) for i, ln in enumerate(linhas)
-                  if (m := RE_RNF_LOCAL_DEF.match(ln))]
-
-    # --- Mermaid por seção --------------------------------------------------
-    mermaids: list[tuple[str, str]] = []
     i = 0
     while i < len(linhas):
         if linhas[i].lstrip().startswith("```mermaid"):
-            sec = _secao_de(i, marcos_h3) or _secao_de(i, marcos_h2)
             corpo = []
             i += 1
             while i < len(linhas) and not linhas[i].lstrip().startswith("```"):
                 corpo.append(linhas[i])
                 i += 1
-            mermaids.append((sec, "\n".join(corpo)))
+            texto = "\n".join(corpo)
+            d.mermaids.append((_tipo_mermaid(texto), texto))
         i += 1
 
-    # --- Capítulo 3 (Dados) -------------------------------------------------
-    cap3_ini, cap3_fim = None, len(linhas)
-    for idx, titulo in marcos_h2:
-        if titulo.strip().startswith("3."):
-            cap3_ini = idx
-        elif cap3_ini is not None and idx > cap3_ini:
-            cap3_fim = idx
-            break
-    cap3 = linhas[cap3_ini:cap3_fim] if cap3_ini is not None else []
-    cap3_texto = "\n".join(cap3)
+    d.links = [(m.group(1), L(i)) for i, ln in enumerate(linhas)
+               for m in RE_LINK_MD.finditer(ln)]
+    texto = "\n".join(linhas)
+    d.ids_citados = {k: set(rx.findall(texto)) for k, rx in IDS_CITAVEIS.items()}
 
-    entidades_proprias: list[tuple[str, int]] = []
-    campos_sem_tipo: list[tuple[str, int]] = []
-    if cap3_ini is not None:
-        # A seção de entidades próprias é achada pelo TÍTULO, não pelo número —
-        # os wikis divergem na numeração (3.1 ou 3.2 "Entidades próprias").
-        dentro_proprias = False
-        for off, ln in enumerate(cap3):
-            if m3 := RE_H3.match(ln):
-                titulo = m3.group(1).lower()
-                dentro_proprias = ("própri" in titulo or "propri" in titulo) \
-                    and "relaç" not in titulo
+    # --- Dados -----------------------------------------------------------
+    sec_dados = acha_secao(secoes, "dados", dentro=None)
+    if sec_dados is not None and "modelo de dados" in sem_acento(sec_dados.rotulo.lower()):
+        sec_dados = None                       # é a seção canônica, não a da feature
+    if sec_dados is not None:
+        fatia = linhas[sec_dados.ini:sec_dados.fim]
+        d.dados_texto = "\n".join(fatia)
+        d.dados_linha = L(sec_dados.ini)
+        d.referencia_canonica = bool(
+            re.search(r"modelo-dados\.md|§\s*4|canônic", d.dados_texto, re.IGNORECASE))
+        for s in secoes:
+            if not (sec_dados.ini < s.ini < sec_dados.fim):
                 continue
-            if dentro_proprias and (m := RE_ENTIDADE_PROPRIA.match(ln)):
-                entidades_proprias.append((m.group(1).strip(), cap3_ini + off + 1))
-        for ini, cab, dados in _tabelas(cap3):
+            t = sem_acento(s.rotulo.lower())
+            if any(x in t for x in ("relaco", "relacoe", "canonic", "propri", "entidades")):
+                continue
+            d.entidades_proprias.append((s.rotulo.strip(), L(s.ini)))
+        for t_ini, cab, dados in _tabelas(fatia):
             i_campo = _idx_coluna(cab, "campo")
             i_tipo = _idx_coluna(cab, "tipo")
             if i_campo is None:
                 continue
             for off, cels in enumerate(dados):
-                nome = cels[i_campo] if i_campo < len(cels) else ""
+                nome_c = cels[i_campo] if i_campo < len(cels) else ""
                 tipo = cels[i_tipo] if i_tipo is not None and i_tipo < len(cels) else ""
-                if nome and not nome.startswith("<") and not tipo.strip(" <>—-"):
-                    campos_sem_tipo.append((nome, cap3_ini + ini + 3 + off))
+                if nome_c and not nome_c.startswith("<") and not tipo.strip(" <>—-"):
+                    d.campos_sem_tipo.append((nome_c, L(sec_dados.ini + t_ini + 2 + off)))
 
-    referencia_canonica = "modelo-dados.md" in cap3_texto
-
-    # --- Links e IDs citados -----------------------------------------------
-    links = [(m.group(1), i + 1) for i, ln in enumerate(linhas)
-             for m in RE_LINK_MD.finditer(ln)]
-    ids_citados = {k: set(rx.findall(texto)) for k, rx in IDS_CITAVEIS.items()}
-
-    palavras = sum(len(ln.split()) for ln in sem_blocos_codigo(linhas))
-
-    return Doc(caminho=caminho, linhas=linhas, frontmatter=fm, rfs=rfs, cts=cts,
-               telas=telas, rnf_locais=rnf_locais, mermaids=mermaids,
-               entidades_proprias=entidades_proprias, campos_sem_tipo=campos_sem_tipo,
-               links=links, ids_citados=ids_citados, cap3_texto=cap3_texto,
-               cap3_inicio=(cap3_ini or 0) + 1, referencia_canonica=referencia_canonica,
-               palavras=palavras)
+    d.palavras = conta_palavras(linhas)
+    return d
 
 
-# ---------------------------------------------------------------------------
-# Contexto do wiki (fontes dos IDs citáveis)
-# ---------------------------------------------------------------------------
-@dataclass
-class Contexto:
-    raiz: Path
-    ids_definidos: dict[str, set[str]]
-    transversais: dict[str, str]     # ID -> enunciado
-    entidades_canonicas: set[str]
+def _contexto_do_spec(linhas: list[str], secoes: list[Secao]) -> Contexto:
+    ctx = Contexto(ids_definidos={k: set() for k in IDS_CITAVEIS})
+
+    def texto_de(*termos: str) -> str:
+        s = acha_secao(secoes, *termos, nivel=2)
+        return "\n".join(linhas[s.ini:s.fim]) if s else ""
+
+    contexto_txt = texto_de("contexto")
+    ctx.ids_definidos["JTBD"] |= set(IDS_CITAVEIS["JTBD"].findall(contexto_txt))
+
+    regras_txt = texto_de("regras")
+    for k in ("RN", "RN-AI"):
+        ctx.ids_definidos[k] |= set(IDS_CITAVEIS[k].findall(regras_txt))
+
+    transv_txt = texto_de("transversais")
+    ctx.ids_definidos["RF-T"] |= set(IDS_CITAVEIS["RF-T"].findall(transv_txt))
+    ctx.ids_definidos["RNF-T"] |= set(IDS_CITAVEIS["RNF-T"].findall(transv_txt))
+    for ln in transv_txt.splitlines():
+        m = re.search(r"\b(RF-T-\d+|RNF-T-[A-ZÀ-Ý]+-\d+)\b", ln)
+        if not m:
+            continue
+        enunciado = re.sub(r"^\s*[-*|]?\s*\**\s*" + re.escape(m.group(1)) + r"\**\s*[—–|-]?\s*",
+                           "", ln).strip(" *|")
+        if m.group(1) not in ctx.transversais or len(enunciado) > len(ctx.transversais[m.group(1)]):
+            ctx.transversais[m.group(1)] = enunciado
+
+    ctx.ids_definidos["A"] |= set(IDS_CITAVEIS["A"].findall(texto_de("arquétipo", "telas comuns")))
+
+    modelo = texto_de("modelo de dados")
+    for ln in modelo.splitlines():
+        if m := re.match(r"^\s*[-*]\s*\*\*(.+?)\*\*", ln):
+            ctx.entidades_canonicas.add(m.group(1).strip())
+    for m in re.finditer(r"^\s{2,}(\w+)\s*\{", modelo, re.MULTILINE):
+        ctx.entidades_canonicas.add(m.group(1))
+    ctx.entidades_canonicas = {e for e in ctx.entidades_canonicas
+                              if e and not e.startswith("<")}
+    return ctx
 
 
-def carrega_contexto(raiz: Path) -> Contexto:
-    definidos: dict[str, set[str]] = {k: set() for k in IDS_CITAVEIS}
-    transversais: dict[str, str] = {}
-    entidades: set[str] = set()
+def _contexto_legado(raiz: Path) -> Contexto:
+    ctx = Contexto(ids_definidos={k: set() for k in IDS_CITAVEIS})
 
     def le(nome: str) -> str:
         p = raiz / nome
@@ -394,36 +484,81 @@ def carrega_contexto(raiz: Path) -> Contexto:
 
     visao = le("visao.md")
     for k in ("RN", "RN-AI", "JTBD"):
-        definidos[k] |= set(IDS_CITAVEIS[k].findall(visao))
+        ctx.ids_definidos[k] |= set(IDS_CITAVEIS[k].findall(visao))
 
     transv = le("requisitos-transversais.md")
-    definidos["RF-T"] |= set(IDS_CITAVEIS["RF-T"].findall(transv))
-    definidos["RNF-T"] |= set(IDS_CITAVEIS["RNF-T"].findall(transv))
+    ctx.ids_definidos["RF-T"] |= set(IDS_CITAVEIS["RF-T"].findall(transv))
+    ctx.ids_definidos["RNF-T"] |= set(IDS_CITAVEIS["RNF-T"].findall(transv))
     for ln in transv.splitlines():
         m = re.search(r"\b(RF-T-\d+|RNF-T-[A-ZÀ-Ý]+-\d+)\b", ln)
         if not m:
             continue
-        # Guarda só o enunciado, sem o ID e sem marcação — o ID poluiria a
-        # comparação de similaridade que detecta RF duplicado (regra S04).
         enunciado = re.sub(r"^\s*[-*]?\s*\**\s*" + re.escape(m.group(1)) + r"\**\s*[—–-]?\s*",
                            "", ln).strip(" *")
-        if m.group(1) not in transversais or len(enunciado) > len(transversais[m.group(1)]):
-            transversais[m.group(1)] = enunciado
+        if m.group(1) not in ctx.transversais or len(enunciado) > len(ctx.transversais[m.group(1)]):
+            ctx.transversais[m.group(1)] = enunciado
 
-    telas_comuns = le("telas-comuns.md")
-    definidos["A"] |= set(IDS_CITAVEIS["A"].findall(telas_comuns))
+    ctx.ids_definidos["A"] |= set(IDS_CITAVEIS["A"].findall(le("telas-comuns.md")))
 
     modelo = le("modelo-dados.md")
     for ln in modelo.splitlines():
         if m := re.match(r"^###\s+(.+?)\s*$", ln):
-            entidades.add(m.group(1).strip())
+            ctx.entidades_canonicas.add(m.group(1).strip())
         elif m := re.match(r"^\s*[-*]\s*\*\*(.+?)\*\*", ln):
-            entidades.add(m.group(1).strip())
+            ctx.entidades_canonicas.add(m.group(1).strip())
     for m in re.finditer(r"^\s{2,}(\w+)\s*\{", modelo, re.MULTILINE):
-        entidades.add(m.group(1))
+        ctx.entidades_canonicas.add(m.group(1))
+    ctx.entidades_canonicas = {e for e in ctx.entidades_canonicas
+                              if e and not e.startswith("<")}
+    return ctx
 
-    return Contexto(raiz=raiz, ids_definidos=definidos, transversais=transversais,
-                    entidades_canonicas={e for e in entidades if e and not e.startswith("<")})
+
+RE_METADADOS = re.compile(r"\*\*Eixo:\*\*.*\*\*Apetite:\*\*", re.IGNORECASE)
+
+
+def parse_spec_unico(caminho: Path) -> Spec:
+    linhas = caminho.read_text(encoding="utf-8").splitlines()
+    secoes = indexa_secoes(linhas)
+    sec_features = acha_secao(secoes, "features", "feature", nivel=2)
+    ctx = _contexto_do_spec(linhas, secoes)
+
+    features: list[Doc] = []
+    for s in filhas(secoes, sec_features, nivel=3):
+        meta = next((ln for ln in linhas[s.ini + 1:min(s.ini + 6, s.fim)]
+                     if RE_METADADOS.search(ln)), "")
+        features.append(_doc_da_fatia(caminho, linhas, s.ini, s.fim, s.rotulo, meta))
+
+    comuns: list[tuple[str, str, int, int]] = []
+    for s in secoes:
+        if s.nivel != 2 or s.ini == sec_features.ini:
+            continue
+        if (chave := s.chave):
+            comuns.append((chave, s.rotulo, s.ini + 1, conta_palavras(linhas[s.ini:s.fim])))
+
+    return Spec(caminho=caminho, modo="spec", contexto=ctx, features=features,
+                secoes_comuns=comuns, palavras=conta_palavras(linhas))
+
+
+def parse_wiki_legado(refined: Path) -> Spec:
+    ctx = _contexto_legado(refined)
+    features: list[Doc] = []
+    total = 0
+    for p in sorted((refined / "Requisitos").glob("*.md")):
+        linhas = p.read_text(encoding="utf-8").splitlines()
+        fm = _frontmatter_dict(linhas)
+        d = _doc_da_fatia(p, linhas, 0, len(linhas), p.stem,
+                          f"eixo: {fm.get('eixo', '')}" if fm.get("eixo") else "")
+        features.append(d)
+        total += d.palavras
+    return Spec(caminho=refined, modo="legado", contexto=ctx, features=features,
+                secoes_comuns=[], palavras=total)
+
+
+def e_spec_unico(caminho: Path) -> bool:
+    if not caminho.is_file() or caminho.suffix != ".md":
+        return False
+    linhas = caminho.read_text(encoding="utf-8").splitlines()
+    return acha_secao(indexa_secoes(linhas), "features", "feature", nivel=2) is not None
 
 
 # ---------------------------------------------------------------------------
@@ -433,19 +568,21 @@ class Lint:
     def __init__(self, regras: dict):
         self.cfg = regras
         self.tetos = regras["tetos"]
+        self.tetos_secao = regras["tetos"].get("secoes", {})
         self.vocab = regras["vocabulario"]
         self.ears = {k: re.compile(v, re.IGNORECASE)
                      for k, v in regras["ears"]["padroes"].items()}
         self.meta_regras = regras["regras"]
 
-    # -- helpers -----------------------------------------------------------
-    def _novo(self, regra: str, doc: Doc, linha: int, alvo: str, msg: str) -> Achado | None:
+    def _novo(self, regra: str, doc: Doc | None, linha: int, alvo: str,
+              msg: str, arquivo: str | None = None) -> Achado | None:
         meta = self.meta_regras.get(regra)
         if meta is None or meta.get("severidade") == "off":
             return None
         return Achado(regra=regra, severidade=meta["severidade"],
-                      critico=meta.get("critico", ""), arquivo=str(doc.caminho),
-                      linha=linha, alvo=alvo, msg=msg)
+                      critico=meta.get("critico", ""),
+                      arquivo=arquivo or str(doc.caminho), linha=linha,
+                      alvo=alvo, msg=msg)
 
     def classifica_ears(self, enunciado: str) -> str | None:
         alvo = enunciado.strip().lower()
@@ -455,21 +592,37 @@ class Lint:
         return None
 
     # -- execução ----------------------------------------------------------
-    def roda(self, doc: Doc, ctx: Contexto) -> list[Achado]:
+    def roda(self, spec: Spec) -> list[Achado]:
         out: list[Achado] = []
-        add = lambda *a: out.append(x) if (x := self._novo(*a)) else None  # noqa: E731
+        add = lambda *a, **kw: out.append(x) if (x := self._novo(*a, **kw)) else None  # noqa: E731
 
-        self._redacao(doc, add)
-        self._testabilidade(doc, add)
-        self._fluxos(doc, add)
-        self._simplicidade(doc, ctx, add)
-        self._nao_funcional(doc, add)
-        self._rastreabilidade(doc, ctx, add)
-        self._dados(doc, ctx, add)
+        for doc in spec.features:
+            self._redacao(doc, spec, add)
+            self._testabilidade(doc, add)
+            self._fluxos(doc, add)
+            self._simplicidade(doc, spec, add)
+            self._nao_funcional(doc, add)
+            self._rastreabilidade(doc, spec.contexto, add)
+            self._dados(doc, spec.contexto, add)
+
+        # tetos de seção comum e global — só no spec único
+        for chave, titulo, linha, palavras in spec.secoes_comuns:
+            teto = self.tetos_secao.get(chave, 0)
+            if teto and palavras > teto:
+                add("R08", None, linha, titulo,
+                    f"{palavras} palavras (teto {teto}) — cortar ou mover p/ anexo",
+                    arquivo=str(spec.caminho))
+        if spec.modo == "spec":
+            teto_g = self.tetos.get("palavras_por_spec", 0)
+            if teto_g and spec.palavras > teto_g:
+                add("R09", None, 1, "",
+                    f"spec com {spec.palavras} palavras (teto {teto_g}) — "
+                    "cortar feature, seção ou detalhe",
+                    arquivo=str(spec.caminho))
         return out
 
     # --- R: redação --------------------------------------------------------
-    def _redacao(self, doc: Doc, add) -> None:
+    def _redacao(self, doc: Doc, spec: Spec, add) -> None:
         lacuna = self.vocab["marcador_lacuna"]
         rx_passiva = re.compile(self.vocab["passiva"], re.IGNORECASE)
 
@@ -510,10 +663,11 @@ class Lint:
                 add("R07", doc, rf.linha, rf.id,
                     "voz passiva — dizer quem faz o que a quem")
 
-        if doc.palavras > self.tetos["palavras_por_artefato"]:
-            add("R06", doc, 1, "",
-                f"{doc.palavras} palavras (teto {self.tetos['palavras_por_artefato']}) "
-                "— mover o comum p/ transversal ou cortar")
+        teto = self.tetos_secao.get("feature", 0)
+        if teto and doc.palavras > teto:
+            add("R06", doc, doc.offset + 1, doc.nome,
+                f"{doc.palavras} palavras (teto {teto}) — mover o comum p/ as seções "
+                "transversais ou cortar")
 
     @staticmethod
     def _nao_singular(en: str) -> bool:
@@ -521,7 +675,6 @@ class Lint:
         limpo = re.sub(r"`[^`]*`", "", limpo)
         if re.search(r"\be/ou\b", limpo, re.IGNORECASE):
             return True
-        # dois verbos de resposta ligados por "e"/","/";" → duas capacidades
         verbos = re.findall(r"\b\w{4,}(?:ar|er|ir)\b", limpo.lower())
         if len(verbos) >= 2 and re.search(r"(,|;|\be\b)", limpo, re.IGNORECASE):
             return True
@@ -546,8 +699,6 @@ class Lint:
                 add("T06", doc, ct.linha, ct.id,
                     f"{n} palavras (teto {self.tetos['palavras_por_cenario']})")
 
-            # T05 compara o RF com o «Então» do cenário: se o resultado esperado é o
-            # próprio enunciado reescrito, o cenário não é key example — não prova nada.
             entao = " ".join(re.findall(r"\*\*Então\*\*(.*)", ct.corpo))
             for rf in doc.rfs:
                 if rf.id in ct.rfs and entao and \
@@ -571,26 +722,27 @@ class Lint:
         tem_indesejado = any(self.classifica_ears(rf.enunciado) == "indesejado"
                              for rf in doc.rfs)
         if doc.rfs and not tem_indesejado:
-            add("F01", doc, doc.rfs[0].linha, "",
+            add("F01", doc, doc.rfs[0].linha, doc.nome,
                 "nenhum RF de comportamento indesejado (Se <gatilho>, então …)")
 
-        fluxo = next((c for s, c in doc.mermaids if s.strip().startswith("1.1")), None)
-        if fluxo is not None and "{" not in fluxo:
-            add("F02", doc, 1, "", "fluxo 1.1 sem nó de decisão — sem ramo de exceção")
+        fluxos = [c for t, c in doc.mermaids if t == "fluxo"]
+        if fluxos and not any("{" in c for c in fluxos):
+            add("F02", doc, doc.offset + 1, doc.nome,
+                "fluxo sem nó de decisão — sem ramo de exceção")
 
-        if not any(s.strip().startswith("1.3") for s, _ in doc.mermaids):
-            add("F03", doc, 1, "", "sem diagrama de navegação (1.3)")
+        if doc.rfs and not any(t == "navegacao" for t, _ in doc.mermaids):
+            add("F03", doc, doc.offset + 1, doc.nome, "sem diagrama de navegação entre telas")
 
         texto = "\n".join(doc.linhas).lower()
         faltando = [d for d in self.vocab["desvios_canonicos"] if d not in texto]
         if faltando and doc.rfs:
-            add("F04", doc, 1, "",
+            add("F04", doc, doc.offset + 1, doc.nome,
                 f"desvio canônico não endereçado: {', '.join(faltando)}")
 
     # --- S: simplicidade ---------------------------------------------------
-    def _simplicidade(self, doc: Doc, ctx: Contexto, add) -> None:
+    def _simplicidade(self, doc: Doc, spec: Spec, add) -> None:
         if len(doc.telas) > self.tetos["telas_por_feature"]:
-            add("S01", doc, doc.telas[0].linha, "",
+            add("S01", doc, doc.telas[0].linha, doc.nome,
                 f"{len(doc.telas)} telas (teto {self.tetos['telas_por_feature']}) "
                 "— fundir em abas/drawers ou reusar arquétipo")
 
@@ -601,24 +753,30 @@ class Lint:
                 add("S05", doc, t.linha, t.id, "sem bloco ```wireframe")
 
         if len(doc.rfs) > self.tetos["rf_por_feature"]:
-            add("S03", doc, doc.rfs[0].linha, "",
+            add("S03", doc, doc.rfs[0].linha, doc.nome,
                 f"{len(doc.rfs)} RF (teto {self.tetos['rf_por_feature']}) "
                 "— promover o comum a RF-T-* ou cortar escopo")
 
         for rf in doc.rfs:
-            for tid, enunciado in ctx.transversais.items():
+            for tid, enunciado in spec.contexto.transversais.items():
                 if jaccard(rf.enunciado, enunciado) >= self.tetos["similaridade_duplicata"]:
                     add("S04", doc, rf.linha, rf.id,
                         f"duplica {tid} do transversal — citar por ID")
                     break
 
+        if spec.modo == "spec" and doc.rfs and not RE_METADADOS.search(doc.metadados):
+            add("S06", doc, doc.offset + 1, doc.nome,
+                "declarar **Eixo:** … **Apetite:** … **Fora desta feature:** …")
+
     # --- N: não-funcional --------------------------------------------------
     def _nao_funcional(self, doc: Doc, add) -> None:
         for rid, linha in doc.rnf_locais:
             add("N01", doc, linha, rid,
-                "RNF vive só em requisitos-transversais.md — promover a RNF-T-* e citar por ID")
-        if doc.rfs and not doc.ids_citados["RNF-T"]:
-            add("N02", doc, 1, "", "nenhum RNF-T-* citado — declarar os aplicáveis")
+                "RNF vive só na seção de requisitos transversais — promover a "
+                "RNF-T-* e citar por ID")
+        if doc.rfs and not doc.ids_citados.get("RNF-T"):
+            add("N02", doc, doc.offset + 1, doc.nome,
+                "nenhum RNF-T-* citado — declarar os aplicáveis")
 
     # --- X: rastreabilidade ------------------------------------------------
     def _rastreabilidade(self, doc: Doc, ctx: Contexto, add) -> None:
@@ -627,23 +785,21 @@ class Lint:
                              rf.refs + " " + rf.enunciado):
                 add("X01", doc, rf.linha, rf.id, "sem RN/JTBD de origem")
 
-        vistos: dict[str, int] = {}
-        for rf in doc.rfs:
-            if rf.id in vistos:
-                add("X02", doc, rf.linha, rf.id, f"já definido na linha {vistos[rf.id]}")
-            vistos[rf.id] = rf.linha
-        vistos_ct: dict[str, int] = {}
-        for ct in doc.cts:
-            if ct.id in vistos_ct:
-                add("X02", doc, ct.linha, ct.id, f"já definido na linha {vistos_ct[ct.id]}")
-            vistos_ct[ct.id] = ct.linha
+        for colecao in (doc.rfs, doc.cts, doc.telas):
+            vistos: dict[str, int] = {}
+            for item in colecao:
+                if item.id in vistos:
+                    add("X02", doc, item.linha, item.id,
+                        f"já definido na linha {vistos[item.id]}")
+                vistos[item.id] = item.linha
 
         for tipo, citados in doc.ids_citados.items():
             definidos = ctx.ids_definidos.get(tipo, set())
             if not definidos:
-                continue                       # fonte ausente: X04 já reporta
+                continue
             for cid in sorted(citados - definidos):
-                linha = next((i + 1 for i, ln in enumerate(doc.linhas) if cid in ln), 1)
+                linha = next((doc.offset + i + 1 for i, ln in enumerate(doc.linhas)
+                              if cid in ln), doc.offset + 1)
                 dica = ""
                 if variante := _variante_padding(cid, definidos):
                     dica = f" — existe «{variante}» (padding do número)"
@@ -656,27 +812,27 @@ class Lint:
 
     # --- D: dados ----------------------------------------------------------
     def _dados(self, doc: Doc, ctx: Contexto, add) -> None:
-        if not doc.cap3_texto:
+        if not doc.dados_texto:
             return
         canon_baixo = {e.lower() for e in ctx.entidades_canonicas}
         for nome, linha in doc.entidades_proprias:
             if nome.lower() in canon_baixo:
                 add("D01", doc, linha, nome,
-                    "entidade canônica — referenciar modelo-dados.md, não remodelar")
+                    "entidade canônica — referenciar a seção de modelo de dados, não remodelar")
 
         if not doc.referencia_canonica:
-            add("D02", doc, doc.cap3_inicio, "",
-                "cap. 3 não referencia modelo-dados.md — declarar as entidades canônicas usadas")
+            add("D02", doc, doc.dados_linha, doc.nome,
+                "não referencia as entidades canônicas do modelo de dados")
 
         for campo, linha in doc.campos_sem_tipo:
             add("D03", doc, linha, campo, "campo sem tipo")
 
         for termo in self.vocab["proibido_dados"]:
-            if contem_termo(doc.cap3_texto, termo):
-                linha = next((doc.cap3_inicio + i
-                              for i, ln in enumerate(doc.cap3_texto.splitlines())
-                              if contem_termo(ln, termo)), doc.cap3_inicio)
-                add("D04", doc, linha, "", f"detalhe técnico no cap. 3: «{termo.strip()}»")
+            if contem_termo(doc.dados_texto, termo):
+                linha = next((doc.dados_linha + i
+                              for i, ln in enumerate(doc.dados_texto.splitlines())
+                              if contem_termo(ln, termo)), doc.dados_linha)
+                add("D04", doc, linha, "", f"detalhe técnico em Dados: «{termo.strip()}»")
 
 
 # ---------------------------------------------------------------------------
@@ -687,7 +843,8 @@ def resumo(achados: list[Achado]) -> str:
         return "lint crítico: limpo."
     por_regra: dict[str, int] = {}
     for a in achados:
-        por_regra[f"{a.regra}/{a.severidade}"] = por_regra.get(f"{a.regra}/{a.severidade}", 0) + 1
+        chave = f"{a.regra}/{a.severidade}"
+        por_regra[chave] = por_regra.get(chave, 0) + 1
     bloq = sum(1 for a in achados if a.severidade == "bloqueia")
     corr = sum(1 for a in achados if a.severidade == "corrige")
     linhas = [f"{bloq} bloqueia · {corr} corrige", ""]
@@ -701,7 +858,7 @@ def ledger(achados: list[Achado], destino: Path, alvo: str) -> Path:
     hoje = _dt.date.today().isoformat()
     arq = destino / f"{alvo}-{hoje}.md"
     linhas = [
-        "---", f"tipo: ledger-critica", f"alvo: {alvo}", f"data: {hoje}",
+        "---", "tipo: ledger-critica", f"alvo: {alvo}", f"data: {hoje}",
         f"achados: {len(achados)}", "---", "",
         f"# Críticas — {alvo} ({hoje})", "",
         "Achados do lint determinístico. Cada correção referencia o ID do achado.", "",
@@ -709,28 +866,39 @@ def ledger(achados: list[Achado], destino: Path, alvo: str) -> Path:
         "|---|---|---|---|---|---|---|",
     ]
     for i, a in enumerate(achados, 1):
-        arq_curto = Path(a.arquivo).name
-        linhas.append(f"| {i} | {a.regra} | {a.severidade} | {arq_curto}:{a.linha} "
+        linhas.append(f"| {i} | {a.regra} | {a.severidade} | {Path(a.arquivo).name}:{a.linha} "
                       f"| {a.alvo or '—'} | {a.msg} | ⬜ |")
     linhas += ["", "Tratamento: ⬜ aberto · ✅ corrigido · 🚫 recusado (justificar abaixo)", ""]
     arq.write_text("\n".join(linhas) + "\n", encoding="utf-8")
     return arq
 
 
-def coleta_alvos(entrada: Path) -> tuple[Path, list[Path]]:
-    """Devolve (raiz_do_refined, docs de feature)."""
+def carrega_spec(entrada: Path) -> Spec:
     if entrada.is_file():
+        if e_spec_unico(entrada):
+            return parse_spec_unico(entrada)
+        # arquivo isolado de feature (wiki legado)
         raiz = entrada.parent.parent if entrada.parent.name == "Requisitos" else entrada.parent
-        return raiz, [entrada]
+        ctx = _contexto_legado(raiz)
+        linhas = entrada.read_text(encoding="utf-8").splitlines()
+        fm = _frontmatter_dict(linhas)
+        d = _doc_da_fatia(entrada, linhas, 0, len(linhas), entrada.stem,
+                          f"eixo: {fm.get('eixo', '')}" if fm.get("eixo") else "")
+        return Spec(caminho=entrada, modo="legado", contexto=ctx, features=[d],
+                    secoes_comuns=[], palavras=d.palavras)
+
+    for cand in (entrada / "spec.md", entrada / "refined" / "spec.md"):
+        if cand.is_file():
+            return parse_spec_unico(cand)
     refined = entrada if (entrada / "Requisitos").is_dir() else entrada / "refined"
-    if not (refined / "Requisitos").is_dir():
-        sys.exit(f"erro: não achei {refined}/Requisitos/")
-    return refined, sorted((refined / "Requisitos").glob("*.md"))
+    if (refined / "Requisitos").is_dir():
+        return parse_wiki_legado(refined)
+    sys.exit(f"erro: não achei spec.md nem {refined}/Requisitos/ em {entrada}")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Lint crítico do spec-kit (gate do loop).")
-    ap.add_argument("alvo", type=Path, help="refined/ do wiki, ou um .md de feature")
+    ap.add_argument("alvo", type=Path, help="spec.md, ou refined/ de um wiki legado")
     ap.add_argument("--regras", type=Path, default=REGRAS_PADRAO)
     ap.add_argument("--json", action="store_true", help="saída JSON (p/ o loop)")
     ap.add_argument("--ledger", type=Path, help="diretório onde gravar o ledger .md")
@@ -738,20 +906,16 @@ def main() -> int:
     args = ap.parse_args()
 
     regras = tomllib.loads(args.regras.read_text(encoding="utf-8"))
-    raiz, docs = coleta_alvos(args.alvo)
-    ctx = carrega_contexto(raiz)
-    lint = Lint(regras)
-
-    achados: list[Achado] = []
-    for d in docs:
-        achados.extend(lint.roda(parse_doc(d), ctx))
+    spec = carrega_spec(args.alvo)
+    achados = Lint(regras).roda(spec)
     if args.so_bloqueia:
         achados = [a for a in achados if a.severidade == "bloqueia"]
-
     achados.sort(key=lambda a: (a.arquivo, a.linha, a.regra))
 
     if args.json:
-        print(json.dumps({"achados": [asdict(a) for a in achados],
+        print(json.dumps({"modo": spec.modo, "features": len(spec.features),
+                          "palavras": spec.palavras,
+                          "achados": [asdict(a) for a in achados],
                           "bloqueia": sum(1 for a in achados if a.severidade == "bloqueia"),
                           "corrige": sum(1 for a in achados if a.severidade == "corrige")},
                          ensure_ascii=False, indent=2))
@@ -759,10 +923,11 @@ def main() -> int:
         for a in achados:
             print(a.linha_texto())
         print()
+        print(f"modo {spec.modo} · {len(spec.features)} feature(s) · {spec.palavras} palavras")
         print(resumo(achados))
 
     if args.ledger:
-        alvo = docs[0].stem if len(docs) == 1 else raiz.parent.name or "wiki"
+        alvo = spec.caminho.stem if spec.caminho.is_file() else (spec.caminho.parent.name or "wiki")
         caminho = ledger(achados, args.ledger, alvo)
         if not args.json:
             print(f"\nledger: {caminho}")

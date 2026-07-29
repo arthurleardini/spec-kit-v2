@@ -7,6 +7,12 @@ status: aberto
 
 # Backlog de Ajustes da Metodologia
 
+> **Nota v3.** Os caminhos citados abaixo são do v2 (`skills/contrato-*`,
+> `templates/transversais/*`). No v3 eles correspondem a: `skills/feature-requisitos`
+> (M1, M3), `skills/feature-telas-fluxos` (M2), `skills/spec-transversais` + §5 do
+> `spec.md` (M4, M5). **M1 a M5 viraram regra do loop crítico** — ver
+> [`LOOP-CRITICO.md`](LOOP-CRITICO.md). M6 e M7 seguem abertos.
+
 Os 7 padrões achados na análise dos produtos Knowledge-MT
 (`knowledge-mt/criticas/Backlog_Ajustes_TRANSVERSAL_P2.1-2.7.md`) não são erro de quem
 escreveu — são **lacunas do próprio kit**. Se o template/skill não pede, o agente não

@@ -1,106 +1,53 @@
 ---
 name: spec-transversais
-description: Use quando o usuário quer gerar ou manter os documentos transversais de uma spec wikiLLM — o modelo de dados canônico, os requisitos transversais (RNF-T/RF-T) e o catálogo de telas comuns (arquétipos) — e emagrecer as features para que apenas os referenciem.
+description: Use quando o usuário quer gerar ou manter o que é comum a várias features — modelo de dados canônico, requisitos não-funcionais e funcionais transversais, catálogo de integrações e arquétipos de tela (seções 4 a 6 do `spec.md`).
 ---
 
 # spec-transversais
 
-Gera e mantém os **três documentos transversais** na raiz de `refined/`, que concentram o
-que é comum a várias features para que **nenhuma feature precise duplicá-lo**:
+Dona das **seções 4 a 6** do `spec.md`. É a skill que impede a spec de duplicar.
 
-- `refined/modelo-dados.md` — **modelo de dados canônico**: as entidades do domínio num
-  único modelo compartilhado (`## Entidades` + `## Relações` + `erDiagram` em Mermaid).
-- `refined/requisitos-transversais.md` — **requisitos cross-cutting**: não-funcionais
-  `RNF-T-<categoria>-NN` por categoria + funcionais `RF-T-NN`.
-- `refined/telas-comuns.md` — **arquétipos de tela** `A-NN`, cada um com um wireframe e a
-  linha "Quando usar".
-
-Responde à pergunta-mãe *O que se repete entre as features — e deve viver num só lugar?*
-
-## Princípio: transversal-first
-
-Pensar **transversalmente, não por feature**. Um único modelo de dados, um conjunto de
-`RNF-T-*`/`RF-T-*`, um catálogo de arquétipos de tela — e features que **referenciam** esses
-transversais e descrevem só o que é específico. Isso **minimiza o número de telas e a
-complexidade**, elimina a duplicação (a mesma entidade/requisito/tela remodelada em cada
-feature) e dá IDs estáveis para cross-reference.
+Princípio: **o que é comum a duas features vive uma vez**, aqui, e a feature cita por ID.
 
 ## Quando usar
-Quando o usuário pede para criar ou atualizar o modelo de dados canônico, consolidar os
-requisitos transversais (RNF-T/RF-T), montar o catálogo de telas comuns / arquétipos, ou
-"emagrecer"/"deduplicar" as features para que apontem para os transversais. Roda depois que
-a Visão existe e há ≥ 2 features (ou para consolidar uma spec já escrita por feature).
+Quando o usuário pede o modelo de dados do produto, os requisitos não-funcionais, o
+catálogo de integrações ou os arquétipos de tela — e sempre que uma feature nova entra na
+seção 7 (para varrer o que subiu de comum).
 
 ## Entrada
-- `refined/visao.md` — Glossário (§2) e Regras (§3) ancoram a terminologia e os `RN-NN`.
-- `refined/Requisitos/<feature>.md` — todas as features existentes (fonte do scan).
-- `refined/componentes.md` — vocabulário genérico de componentes (citado por `telas-comuns`).
-- Templates: `templates/transversais/{modelo-dados,requisitos-transversais,telas-comuns}.md`.
+As seções 1 a 3 (vocabulário e regras) e todas as features já escritas na seção 7.
 
-## Workflow transversal-first
+## Processo
 
-### 1. Modelo de dados (`modelo-dados.md`)
-1. Varrer o **Cap. 3 (Dados)** de cada `Requisitos/<feature>.md` (e, em specs antigas, o
-   antigo Cap. 4) e o Glossário da Visão.
-2. **Extrair as entidades canônicas:** as que aparecem em ≥ 2 features (ou são entidades de
-   domínio centrais). Para cada uma, definir a **feature-lar** (a que a define/alimenta) e
-   consolidar campos, citando a `RN-NN` que governa cada campo quando houver.
-3. Escrever `## Entidades` (uma subseção por entidade), `## Relações` (cardinalidades em
-   prosa) e o bloco ` ```mermaid ` `erDiagram`. Tabelas de execução/log de uma única
-   feature **não** entram aqui (ficam no Cap. 3 da feature, referenciando a entidade).
+1. **§4 Modelo de dados** — entidades canônicas do produto, uma vez.
+   - `4.1 Entidades` — nome, definição, campos-chave. Nome vem do Glossário (§2).
+   - `4.2 Relações` — `erDiagram` em Mermaid.
+   - Varrer a seção 7: entidade que aparece em ≥2 features **sobe** para cá; a feature
+     passa a referenciá-la.
+   - Para cada entidade, declarar a **fonte da verdade** (quem é dona do dado). É o que
+     evita divergência entre features do mesmo programa.
 
-### 2. Requisitos transversais (`requisitos-transversais.md`)
-1. Varrer o **Cap. 2 (Requisitos & Cenários)** de cada feature (RFs, RNFs, CTs).
-2. **Detectar os requisitos comuns:** os que se repetem quase idênticos em ≥ 2 features.
-   Promovê-los a `RNF-T-<categoria>-NN` (por categoria: Segurança, Auditoria, Performance,
-   Disponibilidade, Observabilidade, Conformidade, …) ou `RF-T-NN`. Registrar em
-   `*Subsume:*` quais requisitos de feature cada transversal substitui (rastreabilidade).
-3. IDs estáveis; ao remover, manter o número vago. Valores numéricos são parâmetros de
-   instância.
-4. **Catálogo de Integrações (seção `## Integrações`):** consolidar **todas** as integrações
-   citadas pelas features numa única **matriz sistema × feature** — colunas `| Sistema /
-   fonte | Papel (consolidado) | Direção | Criticidade / fallback | Features que usam |`.
-   Esta seção **não** é RF-T nem RNF-T: é um catálogo. Regras: dedupe por sistema (cada
-   sistema aparece uma vez; somar os papéis e listar todas as features que o tocam na última
-   coluna); nomear com o **vocabulário canônico** do Glossário; direção = consome / produz /
-   bidirecional; cada fallback **coerente com o RNF-T de degradação** (ex.: `RNF-T-DISP-01`),
-   citado por ID; marcar `*(inferência)*` para sistemas/papéis deduzidos e `⚠ NÃO
-   IDENTIFICADO — definir: <pergunta>` para lacunas. Origem conceitual: item "Integrações e
-   sistemas envolvidos" do Checklist de Levantamento Negocial (§11). Manter a matriz
-   sincronizada quando uma feature passa a usar (ou deixa de usar) um sistema.
+2. **§5 Requisitos transversais** — o **único** lugar onde requisito não-funcional existe.
+   - `5.1 Não-funcionais` — `RNF-T-<categoria>-NN` com **mecanismo** declarado, não prosa
+     genérica. Categorias: SEG, AUD, LGPD, DISP, PERF, OBS, CONF, ESC.
+     - Segurança/LGPD exige concreto: matriz perfil × ação, base legal por dado, retenção.
+     - Imutabilidade exige o *como* (ex.: PDF/A + SHA-256 + ICP-Brasil + WORM).
+     - Observabilidade é obrigatória: métrica de negócio, métrica técnica, alerta, log.
+   - `5.2 Funcionais transversais` — `RF-T-NN` em EARS-PT, para o RF que vale em ≥2 features.
+   - `5.3 Integrações` — matriz sistema × papel × direção × criticidade × features.
+     Cada integração tem ficha (endpoint, payload, idempotência, mapa de erro, SLA) **ou**
+     o marcador `⚠ NÃO IDENTIFICADO — depende de: <origem>`.
 
-### 3. Telas comuns (`telas-comuns.md`)
-1. Varrer o **Cap. 1 (Telas & Fluxos)** de cada feature — os `#### T-NN` e seus wireframes.
-2. **Identificar os arquétipos:** padrões de layout/comportamento que se repetem (dashboard,
-   lista/fila, formulário de configuração, detalhe, linha do tempo, fila de aprovação,
-   editor/canvas, comparação, visão 360, construtor de consulta, …). Atribuir IDs `A-NN`.
-3. Para cada arquétipo: descrição, um wireframe na DSL `wireframe`, a linha **Quando usar**,
-   os **Componentes** genéricos e (opcional) as **Instâncias** por feature.
+3. **§6 Arquétipos de tela** — `A-NN` com bloco ` ```wireframe ` e "Quando usar".
+   Padrão de tela que aparece em ≥2 features vira arquétipo aqui; a tela da feature só
+   descreve o que muda.
 
-### 4. Emagrecer as features (slim-down)
-Depois de consolidar os três docs, **revisar cada `Requisitos/<feature>.md`** para que
-apenas referencie os transversais:
-- **Cap. 1:** cada `T-NN` declara `**Arquétipo:** A-NN` e descreve só o que muda; fundir
-  telas redundantes em abas/drawers quando o arquétipo permitir (minimizar telas).
-- **Cap. 2:** trocar requisitos comuns por citações de `RNF-T-*`/`RF-T-*` no bloco
-  "Transversais aplicáveis"; manter só o que é próprio da feature. Trocar qualquer **tabela
-  de integrações** por feature pela **linha de referência** ao catálogo (`**Integrações:**
-  ver [catálogo transversal](../requisitos-transversais.md) (§ Integrações) — esta feature
-  usa: …`); os detalhes (papel/direção/fallback) vivem só na matriz do transversal.
-- **Cap. 3:** trocar a re-modelagem de entidades canônicas por referência a
-  `modelo-dados.md`; manter só entidades/campos próprios (configs, logs, execução).
-Nunca apagar conteúdo em silêncio que diverge do transversal — quando uma feature diverge
-(ex.: threshold próprio), o valor da feature **prevalece** e fica documentado nela.
+4. **Emagrecer a seção 7.** Depois de promover algo para cá, voltar em cada feature e
+   trocar o texto duplicado pela citação do ID. Promover sem emagrecer piora a spec.
 
-## Manutenção
-Ao surgir uma feature nova ou um requisito/entidade/tela recorrente, **promover ao
-transversal** em vez de duplicar. Manter os IDs estáveis. Ao concluir, atualizar
-`refined/index.md` (entradas dos 3 docs sob "Transversais") e anexar entrada em
-`refined/log.md`. Rodar `spec-navigator` para regenerar o navegador (os 3 docs aparecem no
-submenu **Transversais**).
+5. Respeitar os tetos de `[tetos.secoes]` (`modelo_dados`, `transversais`, `arquetipos`).
+   Estourou? o excesso é detalhe de implementação ou repetição — cortar.
 
 ## Saída
-- `refined/modelo-dados.md`, `refined/requisitos-transversais.md` e `refined/telas-comuns.md`
-  na raiz de `refined/`, com frontmatter `tipo: contract`.
-- As `Requisitos/<feature>.md` emagrecidas, referenciando os transversais por ID/nome.
-- `index.md` e `log.md` atualizados.
+Seções 4, 5 e 6 do `spec.md` preenchidas, e as features da seção 7 emagrecidas para apenas
+citar os IDs promovidos.

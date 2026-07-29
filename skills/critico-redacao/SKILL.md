@@ -10,11 +10,11 @@ Hard skill: **escrever requisito funcional que admite uma leitura só**.
 Regras: bloco `R*` e `J-RED-*` de `regras/criticas.toml`. Não invente exigência fora dele.
 
 ## Quando usar
-Crítica de redação de `refined/Requisitos/<feature>.md` (§2.2 RF). Não julga escopo
+Crítica de redação dos RF de uma feature (subseção 7.N.3). Não julga escopo
 (é do `critico-simplicidade`) nem cobertura de teste (é do `critico-testabilidade`).
 
 ## Entrada
-- O doc de feature.
+- A feature (7.N) do `spec.md`.
 - `regras/criticas.toml` (blocos `[vocabulario]`, `[ears]`, `[tetos]`, regras `R*`/`J-RED-*`).
 - Os achados que o lint já emitiu — **não repetir** o que o script achou.
 
@@ -34,15 +34,14 @@ Referência completa: `docs/referencias-v3.md` §B.
 
 ## Processo
 
-1. Ler o §2.2 e os enunciados de RF. Ignorar os que trazem `⚠ NÃO IDENTIFICADO` —
+1. Ler a 7.N.3 e os enunciados de RF. Ignorar os que trazem `⚠ NÃO IDENTIFICADO` —
    lacuna declarada é honesta.
 2. Para cada RF, nesta ordem:
    - **J-RED-01 — duas leituras.** Tentar ler o enunciado de duas formas que levem a
      comportamentos diferentes. Conseguiu? achado, citando as **duas** leituras.
-   - **J-RED-02 — vocabulário.** Termo que não está no Glossário (§2 da Visão), ou o
+   - **J-RED-02 — vocabulário.** Termo que não está no Glossário (§2), ou o
      mesmo termo com dois sentidos no documento.
-   - **J-RED-03 — repetição.** Enunciado que reafirma o que a Visão, o transversal ou
-     outro capítulo já diz. Citar onde já está e propor a citação por ID.
+   - **J-RED-03 — repetição.** Enunciado que reafirma o que as seções 1 a 6 já dizem. Citar onde já está e propor a citação por ID.
 3. Reescrever cada RF criticado no padrão EARS-PT correto — a proposta vai no campo
    `→` do achado. Crítica sem a reescrita pronta não vale.
 4. Aplicar o teto: no máximo 10 achados. Priorizar `bloqueia`; dizer que priorizou.

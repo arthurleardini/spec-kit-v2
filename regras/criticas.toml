@@ -24,20 +24,35 @@ rodadas_max = 2          # Think Motion: loop tem fim, não roda até "ficar bom
 # mais gorda tenha de cortar. Teto acima do máximo do corpus não verifica nada.
 #
 #                        corpus p50 / máx   ·  fixture EARS máx
-# palavras_por_artefato        2667 / 3351   ·   1106
+# secoes.feature              2667 / 3351   ·   1106
 # rf_por_feature                 13 / 18     ·      9
 # telas_por_feature               4 / 5      ·      3
 # palavras_por_rf                 8 / 23     ·     19   (EARS-PT é mais longo por RF
-#                                                        e mais curto por artefato)
+#                                                        e mais curto por feature)
 # palavras_por_cenario           41 / 80     ·     44
 [tetos]
 palavras_por_rf = 20
-palavras_por_artefato = 2200
 telas_por_feature = 5
 rf_por_feature = 14
 palavras_por_cenario = 50
+palavras_por_spec = 20000       # teto global do spec.md — orçamento de contexto
 similaridade_duplicata = 0.80   # Jaccard de tokens p/ detectar RF duplicado no transversal
 similaridade_cenario = 0.70     # Jaccard entre o «Então» do cenário e o RF que ele verifica
+
+# Teto de palavras por seção do `spec.md`. `0` = sem teto (seção que é tabela de
+# domínio, onde volume é conteúdo e não prosa).
+# Medido no wiki knowledge_cob antes da consolidação: Visão 15.086 palavras,
+# modelo de dados 3.692, transversais 1.920, arquétipos 1.996. Num documento único
+# isso é o que faz a spec deixar de caber num contexto de trabalho — daí os tetos.
+# A chave casa pelo TÍTULO da seção (`contexto`, `glossário`, `regras`, …).
+[tetos.secoes]
+contexto = 900
+glossario = 0
+regras = 0
+modelo_dados = 1200
+transversais = 1400
+arquetipos = 1400
+feature = 2200
 
 # ---------------------------------------------------------------------------
 # EARS-PT — sintaxe obrigatória de requisito funcional.
@@ -135,8 +150,10 @@ R02 = { severidade = "bloqueia", critico = "critico-redacao", desc = "RF não si
 R03 = { severidade = "bloqueia", critico = "critico-redacao", desc = "RF usa vocabulário proibido (smell)" }
 R04 = { severidade = "corrige", critico = "critico-redacao", desc = "RF enunciado no negativo — reformular como padrão #5" }
 R05 = { severidade = "corrige", critico = "critico-redacao", desc = "RF acima do teto de palavras" }
-R06 = { severidade = "corrige", critico = "critico-redacao", desc = "artefato acima do teto de palavras" }
+R06 = { severidade = "corrige", critico = "critico-redacao", desc = "feature acima do teto de palavras" }
 R07 = { severidade = "corrige", critico = "critico-redacao", desc = "voz passiva em RF" }
+R08 = { severidade = "corrige", critico = "critico-redacao", desc = "seção comum acima do teto de palavras" }
+R09 = { severidade = "corrige", critico = "critico-redacao", desc = "spec acima do teto global de palavras" }
 
 # --- Testabilidade (critico-testabilidade) ---------------------------------
 T01 = { severidade = "bloqueia", critico = "critico-testabilidade", desc = "RF sem cenário de teste que o verifique" }
@@ -158,6 +175,7 @@ S02 = { severidade = "bloqueia", critico = "critico-simplicidade", desc = "tela 
 S03 = { severidade = "corrige", critico = "critico-simplicidade", desc = "RF acima do teto da feature" }
 S04 = { severidade = "bloqueia", critico = "critico-simplicidade", desc = "RF duplica requisito transversal existente" }
 S05 = { severidade = "corrige", critico = "critico-simplicidade", desc = "tela sem bloco wireframe" }
+S06 = { severidade = "corrige", critico = "critico-simplicidade", desc = "feature sem linha de metadados (eixo / apetite / fora desta feature)" }
 
 # --- Não-funcional: só transversal, citado por ID --------------------------
 N01 = { severidade = "bloqueia", critico = "critico-rastreabilidade", desc = "RNF local na feature — RNF vive só no transversal, citado por ID" }

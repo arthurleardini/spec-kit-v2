@@ -7,8 +7,9 @@ status: ativo
 
 # Loop crítico
 
-Gate de qualidade da Camada de Requisitos. Roda sobre a estrutura do v2 — não substitui
-template nem skill de geração; entra depois deles, antes da entrega.
+Gate de qualidade da **seção 7 (Features)** do `spec.md`. Não substitui template nem
+skill de geração: entra depois delas, antes da entrega. Aceita também o wiki v2
+(`refined/Requisitos/*.md`), sem migração — ver [`CONVENCOES-V3.md`](CONVENCOES-V3.md).
 
 Base externa e derivação de cada regra: [`referencias-v3.md`](referencias-v3.md).
 
@@ -24,7 +25,7 @@ exit code.
 
 | Camada | Quem roda | Custo | O que pega |
 |---|---|---|---|
-| Determinística | `scripts/lint_critico.py` | ~0 | forma EARS-PT, vocabulário proibido, singularidade, RF↔cenário, tetos, ID, link, RNF local, cap. 3 |
+| Determinística | `scripts/lint_critico.py` | ~0 | forma EARS-PT, vocabulário proibido, singularidade, RF↔cenário, tetos por seção e global, ID, link, RNF local, Dados |
 | Julgamento | 6 agentes críticos | alto | ambiguidade real, rastreio falso, desvio não modelado, corte de escopo, promoção de entidade |
 
 A ordem importa: o script roda primeiro e barato, e o crítico recebe os achados dele
@@ -41,7 +42,7 @@ Um por hard skill de levantamento. Cada um lê só o seu bloco de regras.
 | `critico-simplicidade` | corte de tela/RF/conceito, escopo, implementação disfarçada | `S*`, `J-SMP-*` |
 | `critico-fluxos` | desvio, exceção, contradição fluxo↔RF, estado órfão | `F*`, `J-FLX-*` |
 | `critico-dados` | entidade canônica, fonte da verdade, suporte aos RF | `D*`, `J-DAD-*` |
-| `critico-rastreabilidade` | ID, fonte, rastreio falso, fato duplicado, RNF fora do transversal | `X*`, `N*`, `J-RAS-*` |
+| `critico-rastreabilidade` | ID, fonte, rastreio falso, fato duplicado, RNF fora da §5 | `X*`, `N*`, `J-RAS-*` |
 
 Seis mandatos estreitos em vez de um auditor genérico: *Think Small* — grupo pequeno com
 motivo para estar na sala. Cada crítico tem teto de **10 achados**; estourou, prioriza.
@@ -90,22 +91,22 @@ recusado **com justificativa** — não só o resultado final.
 ## Como rodar
 
 ```bash
-# uma feature
-python3 scripts/lint_critico.py caminho/refined/Requisitos/minha-feature.md
-
-# o wiki inteiro, com ledger
-python3 scripts/lint_critico.py caminho/refined --ledger criticas/
+# a spec inteira, com ledger
+python3 scripts/lint_critico.py caminho/spec.md --ledger criticas/
 
 # só o que bloqueia, em JSON, para o loop consumir
-python3 scripts/lint_critico.py caminho/refined --json --so-bloqueia
+python3 scripts/lint_critico.py caminho/spec.md --json --so-bloqueia
 
-# regressão do próprio lint
+# wiki v2 (modo legado — sem spec.md, varre refined/Requisitos/)
+python3 scripts/lint_critico.py caminho/refined
+
+# regressão do próprio lint (5 asserções, nos dois formatos)
 python3 scripts/testa_lint.py
 ```
 
-Fixtures em `examples/lint/`: `feature-boa.md` sai limpa (prova que o ruleset é
-satisfazível e serve de referência de redação); `feature-ruim.md` dispara as 27 regras
-listadas em `examples/lint/esperado-ruim.txt`.
+Fixtures em `examples/lint/`: `spec-boa.md` sai limpa (prova que o ruleset é satisfazível
+e serve de referência de redação); `spec-ruim.md` dispara as 20 regras de
+`esperado-spec-ruim.txt`. As fixtures `refined/feature-*.md` cobrem o modo legado.
 
 ## Regras de escrita que o loop passou a cobrar
 
@@ -129,12 +130,12 @@ Brevidade aqui é orçamento, não gosto: artefato longo custa contexto e degrad
 que o lê depois. O que a torna verificável é o teto — e teto só vale se **alguém estoura**.
 
 Os tetos foram calibrados no corpus real de 14 features (`knowledge_cob`) e na fixture
-EARS-nativa `examples/lint/refined/Requisitos/feature-boa.md`, que cobre 9 RF, 9 cenários
-e 3 telas em **1106 palavras** — 42% da média do corpus (2607).
+EARS-nativa `examples/lint/spec-boa.md`, cuja primeira feature cobre 9 RF, 9 cenários e
+3 telas em **1106 palavras** — 42% da média do corpus (2607).
 
 | Teto | corpus p50 | corpus máx | fixture EARS | teto | estouram no corpus |
 |---|---|---|---|---|---|
-| palavras/artefato | 2667 | 3351 | 1106 | **2200** | 13 de 14 |
+| palavras/feature | 2667 | 3351 | 1106 | **2200** | 13 de 14 |
 | palavras/cenário | 41 | 80 | 44 | **50** | 29 cenários |
 | RF/feature | 13 | 18 | 9 | **14** | 5 features |
 | palavras/RF | 8 | 23 | 19 | **20** | 1 RF |
@@ -148,39 +149,67 @@ Onde as palavras estão hoje, no corpus:
 
 | Parte | Fatia |
 |---|---|
-| Cap. 2 (Requisitos & Cenários) | 49% |
-| Cap. 1 (Telas & Fluxos) | 23% |
-| Cap. 3 (Dados) | 19% |
-| §2.3 (RNF por feature) | 8% — some inteira pela regra `N01` |
+| Requisitos & cenários (hoje 7.N.3 / 7.N.4) | 49% |
+| Telas & fluxos (hoje 7.N.1 / 7.N.2) | 23% |
+| Dados (hoje 7.N.5) | 19% |
+| RNF escrito por feature | 8% — some inteiro pela regra `N01` |
 | Prosa instrucional herdada do template (linhas `>`) | 6% |
 
 Duas conclusões: EARS-PT **alonga o RF** (p50 8 → 11-19 palavras) e **encurta o
 artefato**, porque mata a prosa que explicava o que o enunciado não dizia. E 14% de cada
 spec é peso que não é conteúdo da feature — RNF duplicado (8%) e instrução de template (6%).
 
+## Tetos por seção
+
+O documento único expôs o que o wiki escondia: no `knowledge_cob`, `visao.md` tinha
+**15.086 palavras** — o maior artefato do conjunto, sem teto nenhum. Concentrar tudo num
+arquivo obriga a orçar cada seção.
+
+| Seção | Corpus v2 (palavras) | Teto |
+|---|---|---|
+| 1 Contexto | 15.086 (a Visão inteira) | **900** |
+| 2 Glossário | — | sem teto (tabela de domínio) |
+| 3 Regras de negócio | — | sem teto (tabela de domínio) |
+| 4 Modelo de dados | 3.692 | **1.200** |
+| 5 Requisitos transversais | 1.920 | **1.400** |
+| 6 Arquétipos de tela | 1.996 | **1.400** |
+| 7.N cada feature | 2.667 (p50) | **2.200** |
+| spec inteira | 59.600 (soma do wiki) | **20.000** |
+
+Glossário e Regras não têm teto porque ali volume é conteúdo, não prosa: 52 regras de
+negócio são 52 fatos. Os demais têm, e a regra é sempre a mesma — estourou, **corta**.
+
+Regras: `R08` (seção comum acima do teto), `R09` (spec acima do teto global), `R06`
+(feature acima do teto). O teto global de 20.000 palavras é orçamento de contexto: acima
+disso a spec deixa de caber confortavelmente numa sessão de trabalho, humana ou de agente.
+
 ## Fora desta rodada
 
-Registrado para o kit v3 propriamente dito (esta rodada entregou só o loop):
-
-- `constituicao.md` como artefato de 1ª classe do wiki, lido por toda skill de geração.
-- **Apetite** por feature no frontmatter e seção **No-gos / rabbit holes** no template
-  (Shape Up) — hoje o loop cobra teto, mas o teto não vem do apetite declarado.
-- EARS-PT embutido nos templates e nas skills `contrato-*`, para a spec **nascer** na
-  forma em vez de ser corrigida depois.
 - M6 (ficha de contrato por integração) e M7 (modelo canônico de programa) do
-  [backlog](backlog-ajustes-metodologia.md) — dependem de artefato novo.
-- Crítica da Camada de Intenção: hoje o loop cobre só a Camada de Requisitos; a Visão
-  segue com `spec-audit` (CSD).
+  [backlog](backlog-ajustes-metodologia.md). A §5.3 já pede a ficha ou o marcador de
+  dependência, mas nenhuma regra do lint verifica o conteúdo dela; e não existe camada
+  acima do produto para um programa multi-produto.
+- **Crítica das seções 1 a 6.** O loop cobre a seção 7; o alicerce segue com `spec-audit`
+  (CSD). Os críticos de redação e rastreabilidade se aplicariam bem à §3, mas hoje não são
+  despachados para lá.
+- **Apetite não vira teto.** A feature declara apetite (2 ou 6 semanas), e o lint exige a
+  declaração (`S06`), mas o teto de telas e de RF é global — não deriva do apetite
+  declarado. O certo seria 2 semanas comprarem menos tela que 6.
+- **Registro por seção não é verificado.** A convenção diz §1 narrativa e §4+ estruturado;
+  nenhuma regra confere.
+- **Migração automática.** O roteiro de wiki → spec única em
+  [`CONVENCOES-V3.md`](CONVENCOES-V3.md) é manual; não há script.
 
-Furos que sobram na parte de **concisão**, todos dependentes de mexer no template:
+## Fechado nesta rodada
 
-- **Emagrecer `templates/contrato/contrato.md`** (225 linhas, das quais a maioria é
-  blockquote de instrução). Hoje 6% de cada spec gerada é prosa de template copiada. A
-  instrução tem de viver na skill, que o agente lê e não copia — não no template, que o
-  agente copia e não relê.
-- **Teto por capítulo**, não só por artefato. O Cap. 2 come 49% das palavras e nada
-  impede que ele coma 70%.
-- **Sem teto na Visão nem nos transversais.** O loop mede só `Requisitos/<feature>.md`;
-  a Visão pode inflar sem gate.
-- **Registro por capítulo** (narrativa na Visão × estruturado nos Requisitos) está
-  documentado em `referencias-v3.md` §E, mas não é verificado por nenhuma regra.
+O que estava listado como furo e saiu:
+
+- `constituicao.md` de 1ª classe → `templates/CLAUDE.md`, copiado pelo `spec-scaffold` e
+  lido por toda skill antes de escrever.
+- Apetite e no-gos no template → linha de metadados da feature, exigida por `S06`.
+- Teto por capítulo → `[tetos.secoes]`, com `R08`/`R09`.
+- Template gordo → `templates/spec.md` é esqueleto; a instrução mora nas skills, que o
+  agente lê e não copia. Os 6% de prosa de template por spec somem.
+- Visão e transversais sem gate → viraram seções 1 a 6, com teto.
+- EARS-PT embutido na geração → `feature-requisitos` e `templates/CLAUDE.md` trazem a
+  tabela dos 6 padrões, então a spec nasce na forma em vez de ser corrigida depois.

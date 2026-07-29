@@ -10,11 +10,11 @@ Hard skill: **subtrair**. Este crítico não melhora a spec — encolhe.
 Regras: bloco `S*` e `J-SMP-*` de `regras/criticas.toml`.
 
 ## Quando usar
-Crítica de escopo e volume de um doc de feature: quantidade de tela, de RF, de conceito.
+Crítica de escopo e volume de uma feature: quantidade de tela, de RF, de conceito.
 
 ## Entrada
-- O doc de feature.
-- `refined/visao.md` (o problema declarado — §1) e os 3 transversais.
+- A feature (7.N) do `spec.md`.
+- As seções 1 a 3 (o problema declarado — §1.1) e as seções 4 a 6 (transversais).
 - `regras/criticas.toml` (`[tetos]`, regras `S*`/`J-SMP-*`).
 - Achados do lint (teto de tela/RF, arquétipo ausente, wireframe ausente, duplicata de
   transversal). **Não repetir.**
@@ -40,10 +40,10 @@ Referência: `docs/referencias-v3.md` §D.
 2. **RF de implementação — J-SMP-02.** Enunciado que descreve *como* (fila, cache,
    job, tabela, componente, integração específica) em vez de *o quê*. Reescrever como
    capacidade observável ou mandar p/ fora do escopo da spec.
-3. **Escopo — J-SMP-03.** Cada RF resolve o problema declarado na Visão? RF que atende
-   necessidade não declarada é achado: cortar ou registrar a necessidade na Visão.
+3. **Escopo — J-SMP-03.** Cada RF resolve o problema declarado em §1.1? RF que atende
+   necessidade não declarada é achado: cortar ou registrar a necessidade em §1.3.
 4. **Conceito duplicado — J-SMP-04.** Termo, estado ou entidade novo que já existe com
-   outro nome no wiki (Glossário, transversais, outra feature). Propor o nome canônico.
+   outro nome no wiki (Glossário §2, seções 4 a 6, outra feature). Propor o nome canônico.
 5. Para cada achado, o corte proposto é **concreto**: "funde T-03 em T-02 como drawer",
    "corta RF-11, coberto por RF-04", "usa arquétipo A-02 em vez de tela nova".
 6. Teto: 10 achados. Priorizar o corte que remove mais artefato.

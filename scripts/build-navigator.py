@@ -82,9 +82,71 @@ def parse_blueprint(text):
     return [e for e in etapas if e["features"]]
 
 
+def _slug(txt: str) -> str:
+    s = re.sub(r"[^a-z0-9]+", "-", txt.lower()).strip("-")
+    return s or "secao"
+
+
+def acha_spec() -> Path | None:
+    """Formato v3: um `spec.md` por produto. Preferido sobre o wiki de vários arquivos."""
+    for cand in (BASE / "spec.md", REFINED / "spec.md"):
+        if cand.is_file():
+            return cand
+    return None
+
+
+def collect_spec(spec: Path):
+    """Fatia o spec.md por seção `##`. Cada seção vira um doc do navegador; as features
+    (subseções `###` da seção Features) viram um grupo. Mesmo formato de saída do modo
+    wiki, então o render de Mermaid e wireframe continua igual."""
+    linhas = read(spec).splitlines()
+    caminho = str(spec.relative_to(BASE))
+    docs, tree = {}, []
+
+    h2 = [(i, m.group(1).strip()) for i, ln in enumerate(linhas)
+          if (m := re.match(r"^##\s+(.+)$", ln))]
+
+    if h2 and h2[0][0] > 0:                       # título + preâmbulo antes da 1ª seção
+        docs["spec/capa"] = {"title": "Capa", "path": caminho,
+                             "content": "\n".join(linhas[:h2[0][0]])}
+        tree.append({"label": "capa", "type": "doc", "id": "spec/capa"})
+
+    for idx, (ini, titulo) in enumerate(h2):
+        fim = h2[idx + 1][0] if idx + 1 < len(h2) else len(linhas)
+        bloco = linhas[ini:fim]
+        doc_id = f"spec/{_slug(titulo)}"
+        e_features = "feature" in titulo.lower()
+
+        if e_features:
+            kids = []
+            sub = [(j, m.group(1).strip()) for j, ln in enumerate(bloco)
+                   if (m := re.match(r"^###\s+(.+)$", ln))]
+            intro = "\n".join(bloco[1:sub[0][0]]).strip() if sub else ""
+            if intro:                             # texto introdutório da seção
+                docs[doc_id] = {"title": titulo, "path": caminho,
+                                "content": "\n".join(bloco[:sub[0][0]])}
+                kids.append({"label": "visão geral", "type": "doc", "id": doc_id})
+            for k, (sj, stitulo) in enumerate(sub):
+                sfim = sub[k + 1][0] if k + 1 < len(sub) else len(bloco)
+                sid = f"spec/{_slug(stitulo)}"
+                docs[sid] = {"title": stitulo, "path": caminho,
+                             "content": "\n".join(bloco[sj:sfim])}
+                kids.append({"label": stitulo, "type": "doc", "id": sid})
+            tree.append({"label": f"{titulo} ({len(sub)})", "type": "group",
+                         "children": kids})
+        else:
+            docs[doc_id] = {"title": titulo, "path": caminho,
+                            "content": "\n".join(bloco)}
+            tree.append({"label": titulo, "type": "doc", "id": doc_id})
+
+    return docs, tree
+
+
 def collect():
+    if (spec := acha_spec()) is not None:
+        return collect_spec(spec)
     if not REFINED.is_dir():
-        sys.exit(f"ERRO: {REFINED} não encontrado. Rode na raiz do knowledge_cob.")
+        sys.exit(f"ERRO: nem {BASE / 'spec.md'} nem {REFINED} encontrados.")
 
     docs = {}
     tree = []

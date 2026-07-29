@@ -1,11 +1,11 @@
 ---
 name: spec-critico
-description: Use quando o usuário quer criticar, auditar ou "fechar o gate" de um documento da Camada de Requisitos antes de entregar — roda o lint determinístico, despacha os críticos especialistas em paralelo, consolida o ledger de achados e reabre o loop até o gate abrir ou acabarem as rodadas.
+description: Use quando o usuário quer criticar, auditar ou "fechar o gate" de uma feature da spec antes de entregar — roda o lint determinístico, despacha os críticos especialistas em paralelo, consolida o ledger de achados e reabre o loop até o gate abrir ou acabarem as rodadas.
 ---
 
 # spec-critico — orquestrador do loop crítico
 
-Fecha o gate de um `refined/Requisitos/<feature>.md`. Duas camadas de crítica:
+Fecha o gate das features do `spec.md`. Duas camadas de crítica:
 
 1. **Determinística** — `scripts/lint_critico.py`. Forma, teto, ID, link, RF↔cenário.
    Barato, repetível, exit code. Roda sempre primeiro.
@@ -17,21 +17,22 @@ nem o script nem o crítico inventam exigência.
 
 ## Quando usar
 Antes de entregar uma feature, antes de avançar de camada, ou quando o usuário pede
-para criticar/auditar/revisar requisitos. Para auditar a **Visão** (Camada de Intenção)
-pelo método CSD, use `spec-audit` — este loop é da Camada de Requisitos.
+para criticar/auditar/revisar requisitos. Para auditar as seções 1 a 3
+pelo método CSD, use `spec-audit` — este loop é da seção 7.
 
 ## Entrada
-- Um ou mais `refined/Requisitos/<feature>.md`.
-- O `refined/` do wiki (o lint precisa dele p/ resolver `RN-*`, `RNF-T-*`, `A-*`, entidades).
+- O `spec.md` do produto. O lint resolve `RN-*`, `RNF-T-*`, `A-*` e entidades nas
+  seções 1 a 6 do próprio arquivo.
+- Opcionalmente, quais features criticar (padrão: todas).
 
 ## Processo
 
 ### Rodada (repetir até `rodadas_max` do TOML — padrão 2)
 
-1. **Lint.** `python3 scripts/lint_critico.py <refined> --json --ledger criticas/`
+1. **Lint.** `python3 scripts/lint_critico.py <spec.md> --json --ledger criticas/`
    Exit 0 = limpo · 1 = só «corrige» · 2 = há «bloqueia».
 2. **Despacho paralelo.** Um subagente por crítico, numa só mensagem. Só os críticos
-   relevantes ao artefato — não despache `critico-dados` num doc sem capítulo 3.
+   relevantes ao artefato — não despache `critico-dados` numa feature sem a subseção de Dados.
 
    | Crítico | Mandato |
    |---|---|
@@ -47,7 +48,7 @@ pelo método CSD, use `spec-audit` — este loop é da Camada de Requisitos.
    repetir) **e as regras de resposta do `CLAUDE.md` do workspace** (falar pouco, zero
    juízo de valor, texto longo em arquivo).
 3. **Consolidar.** Juntar achados do lint + dos críticos no ledger
-   `criticas/<feature>-<AAAA-MM-DD>.md`. Deduplicar por `(regra, alvo)`. Ordenar
+   `criticas/<spec>-<AAAA-MM-DD>.md`. Deduplicar por `(regra, alvo)`. Ordenar
    `bloqueia` antes de `corrige`.
 4. **Corrigir.** Aplicar as correções no artefato. Cada edição referencia o **ID do
    achado** no ledger (`✅`). Recusa é legítima, mas exige justificativa escrita na
@@ -78,13 +79,13 @@ pelo método CSD, use `spec-audit` — este loop é da Camada de Requisitos.
 Exemplo:
 
 ```
-Requisitos/regua.md:168: [J-RED-01/bloqueia] RF-03: "respeitar aceite vigente" admite duas
+spec.md:412: [J-RED-01/bloqueia] RF-03: "respeitar aceite vigente" admite duas
   leituras — bloquear o disparo ou registrar a exceção. → escolher uma e escrever em EARS-PT.
 ```
 
 ## Saída
-- Ledger `criticas/<feature>-<data>.md` com todos os achados e o tratamento de cada um.
-- Artefato corrigido.
-- Uma linha em `refined/log.md`: `## [AAAA-MM-DD] critico | <feature> — <N> achados, gate <aberto|fechado>`.
+- Ledger `criticas/<spec>-<data>.md` com todos os achados e o tratamento de cada um.
+- `spec.md` corrigido.
+- Um commit com o motivo na mensagem — o histórico da spec é o git, não um `log.md`.
 - Resposta no chat: 3 linhas no máximo — gate aberto/fechado, quantos achados por
   severidade, caminho do ledger.

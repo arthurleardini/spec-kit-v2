@@ -10,10 +10,10 @@ Hard skill: **provar que o requisito foi cumprido sem depender de opinião**.
 Regras: bloco `T*` e `J-TST-*` de `regras/criticas.toml`.
 
 ## Quando usar
-Crítica do §2.4 (Cenários de Teste) contra o §2.2 (RF) de um doc de feature.
+Crítica da 7.N.4 (cenários) contra a 7.N.3 (RF) de uma feature.
 
 ## Entrada
-- O doc de feature.
+- A feature (7.N) do `spec.md`.
 - `regras/criticas.toml` (regras `T*`/`J-TST-*`, `[tetos]`, `[vocabulario].sinais_excecao`).
 - Achados do lint — o script já cobre RF sem cenário, cenário sem RF-pai, ausência de
   Dado/Quando/Então, teto de palavras e cenário que só reescreve o RF. **Não repetir.**

@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Teste de regressão do lint crítico.
 
-Três asserções:
-  1. `feature-boa.md` sai limpa (exit 0) — prova que o ruleset é satisfazível.
-  2. `feature-ruim.md` dispara cada regra listada em `examples/lint/esperado-ruim.txt`.
-  3. Com tetos apertados, as regras de tamanho disparam em `feature-boa.md`
-     (prova que os tetos vêm do TOML e não estão hardcoded).
+Cinco asserções, cobrindo os dois formatos de entrada:
+
+  spec único (v3)
+  1. `spec-boa.md` sai limpa — prova que o ruleset é satisfazível no formato novo.
+  2. `spec-ruim.md` dispara cada regra de `examples/lint/esperado-spec-ruim.txt`.
+  3. Com tetos apertados, `spec-boa.md` dispara os tetos de seção e o global (R08, R09).
+
+  wiki legado (v2)
+  4. `feature-boa.md` sai limpa.
+  5. `feature-ruim.md` dispara cada regra de `examples/lint/esperado-ruim.txt`;
+     com tetos apertados, dispara também as regras de tamanho.
 
 Uso: python3 scripts/testa_lint.py
 """
@@ -20,18 +26,17 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 LINT = RAIZ / "scripts" / "lint_critico.py"
-BOA = RAIZ / "examples" / "lint" / "refined" / "Requisitos" / "feature-boa.md"
-RUIM = RAIZ / "examples" / "lint" / "refined" / "Requisitos" / "feature-ruim.md"
-ESPERADO = RAIZ / "examples" / "lint" / "esperado-ruim.txt"
+EX = RAIZ / "examples" / "lint"
+SPEC_BOA = EX / "spec-boa.md"
+SPEC_RUIM = EX / "spec-ruim.md"
+BOA = EX / "refined" / "Requisitos" / "feature-boa.md"
+RUIM = EX / "refined" / "Requisitos" / "feature-ruim.md"
 REGRAS = RAIZ / "regras" / "criticas.toml"
 
-TETOS_APERTADOS = {
-    "palavras_por_rf": 5,
-    "palavras_por_artefato": 60,
-    "telas_por_feature": 2,
-    "rf_por_feature": 3,
-    "palavras_por_cenario": 10,
-}
+TETOS_TAMANHO = {"palavras_por_rf": 5, "telas_por_feature": 2, "rf_por_feature": 3,
+                 "palavras_por_cenario": 10, "feature": 50}
+TETOS_SECAO = {"contexto": 20, "modelo_dados": 20, "transversais": 20,
+               "arquetipos": 20, "palavras_por_spec": 100}
 
 
 def roda(alvo: Path, regras: Path = REGRAS) -> tuple[int, str]:
@@ -40,11 +45,16 @@ def roda(alvo: Path, regras: Path = REGRAS) -> tuple[int, str]:
     return p.returncode, p.stdout + p.stderr
 
 
-def regras_disparadas(saida: str) -> set[str]:
+def disparadas(saida: str) -> set[str]:
     return set(re.findall(r"\[([A-Z]\d{2})/", saida))
 
 
-def toml_com_tetos(novos: dict) -> Path:
+def esperadas(arq: Path) -> set[str]:
+    return {ln.split()[0] for ln in arq.read_text(encoding="utf-8").splitlines()
+            if ln.strip() and not ln.startswith("#")}
+
+
+def toml_com(novos: dict) -> Path:
     texto = REGRAS.read_text(encoding="utf-8")
     for chave, valor in novos.items():
         texto = re.sub(rf"^{chave}\s*=.*$", f"{chave} = {valor}", texto,
@@ -57,33 +67,38 @@ def toml_com_tetos(novos: dict) -> Path:
 def main() -> int:
     falhas: list[str] = []
 
-    # 1 — a fixture boa passa limpa
-    codigo, saida = roda(BOA)
-    if codigo != 0:
-        falhas.append(f"feature-boa deveria sair limpa; exit={codigo}\n{saida}")
+    def checa_limpo(alvo: Path) -> None:
+        codigo, saida = roda(alvo)
+        if codigo != 0:
+            falhas.append(f"{alvo.name} deveria sair limpa; exit={codigo}\n{saida}")
 
-    # 2 — a fixture ruim dispara todas as regras esperadas
-    codigo, saida = roda(RUIM)
-    if codigo != 2:
-        falhas.append(f"feature-ruim deveria bloquear (exit 2); exit={codigo}")
-    esperadas = {ln.split()[0] for ln in ESPERADO.read_text(encoding="utf-8").splitlines()
-                 if ln.strip() and not ln.startswith("#")}
-    faltando = esperadas - regras_disparadas(saida)
-    if faltando:
-        falhas.append(f"regras esperadas que não dispararam: {sorted(faltando)}")
+    def checa_dispara(alvo: Path, mapa: Path) -> None:
+        codigo, saida = roda(alvo)
+        if codigo != 2:
+            falhas.append(f"{alvo.name} deveria bloquear (exit 2); exit={codigo}")
+        if faltando := esperadas(mapa) - disparadas(saida):
+            falhas.append(f"{alvo.name}: regras esperadas que não dispararam: {sorted(faltando)}")
 
-    # 3 — tetos vêm do TOML
-    codigo, saida = roda(BOA, toml_com_tetos(TETOS_APERTADOS))
-    tamanho = {"R05", "R06", "S01", "S03", "T06"}
-    faltando = tamanho - regras_disparadas(saida)
-    if faltando:
-        falhas.append(f"regras de teto não dispararam com tetos apertados: {sorted(faltando)}")
+    def checa_tetos(alvo: Path, tetos: dict, regras_esperadas: set[str]) -> None:
+        _, saida = roda(alvo, toml_com(tetos))
+        if faltando := regras_esperadas - disparadas(saida):
+            falhas.append(f"{alvo.name}: tetos não dispararam: {sorted(faltando)}")
+
+    # --- spec único --------------------------------------------------------
+    checa_limpo(SPEC_BOA)
+    checa_dispara(SPEC_RUIM, EX / "esperado-spec-ruim.txt")
+    checa_tetos(SPEC_BOA, TETOS_SECAO, {"R08", "R09"})
+
+    # --- wiki legado ------------------------------------------------------
+    checa_limpo(BOA)
+    checa_dispara(RUIM, EX / "esperado-ruim.txt")
+    checa_tetos(BOA, TETOS_TAMANHO, {"R05", "R06", "S01", "S03", "T06"})
 
     if falhas:
         for f in falhas:
             print("FALHA:", f)
         return 1
-    print("testa_lint: ok — 3 asserções passaram.")
+    print("testa_lint: ok — 5 asserções passaram (spec único + wiki legado).")
     return 0
 
 

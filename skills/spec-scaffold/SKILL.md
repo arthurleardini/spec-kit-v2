@@ -1,56 +1,52 @@
 ---
 name: spec-scaffold
-description: Use quando o usuário quer iniciar uma spec wikiLLM nova — criar a estrutura de diretórios e os arquivos-base de um wiki para um produto. É o primeiro passo de uso do spec-kit.
+description: Use quando o usuário quer iniciar uma spec nova — cria o `spec.md` único do produto a partir do template, mais o `CLAUDE.md` do repositório. Primeiro passo de uso do spec-kit.
 ---
 
 # spec-scaffold
 
-Cria a estrutura **FLAT** de um wiki wikiLLM novo para um produto: os arquivos-base do wiki (incluindo `visao.md`, `componentes.md` e os **três documentos transversais** — `modelo-dados.md`, `requisitos-transversais.md`, `telas-comuns.md` — na raiz de `refined/`), a pasta `refined/Requisitos/` e o `CLAUDE.md` na raiz, a partir dos templates do spec-kit.
+Cria a spec de um produto: **um arquivo**, `spec.md`, a partir de `templates/spec.md`.
 
-É o **primeiro passo** de uso do kit — roda uma vez por produto, antes da skill `intencao-visao` ou de qualquer skill `contrato-*`.
+Roda uma vez por produto, antes de qualquer skill geradora.
 
 ## Quando usar
-Quando o usuário pede para começar uma spec nova, criar o wiki de um produto, montar o esqueleto/estrutura do wikiLLM, ou inicializar um repositório de spec.
+Quando o usuário pede para começar uma spec nova, montar o esqueleto de uma
+especificação ou inicializar um repositório de spec.
 
 ## Entrada
-- O diretório onde o wiki será criado (`<wiki>` — a raiz que conterá `refined/` e `CLAUDE.md`).
-- O nome do produto.
-- Opcionalmente, se há um pipeline `raw/`/`trusted/` ou se a fonte será conversa/docs (não muda a estrutura criada, só informa o `overview.md`).
+- Diretório onde a spec vai viver.
+- Nome do produto.
 
 ## Processo
-1. Confirmar com o usuário o diretório `<wiki>` e o nome do produto.
-2. Criar a estrutura **FLAT** sob `<wiki>/refined/`:
-   - `refined/Requisitos/` — pasta (vazia no scaffold) que receberá um `<feature>.md` por feature.
-   - `refined/_archive/` *(opcional — artefatos obsoletos)*.
-   - **Não** há mais pastas `intencao/` nem `contracts/`. A Visão e o catálogo de
-     componentes ficam na **raiz** de `refined/`.
-3. Criar os arquivos-base a partir de `templates/wiki/` do spec-kit, substituindo `<produto>` e `<data>`:
-   - `refined/index.md` ← `templates/wiki/index.md`
-   - `refined/log.md` ← `templates/wiki/log.md`
-   - `refined/overview.md` ← `templates/wiki/overview.md`
-   - `refined/blueprint.md` ← `templates/contrato/blueprint.md` *(esqueleto; preenchido por `contrato-blueprint`)*
-   - `<wiki>/CLAUDE.md` ← `templates/wiki/CLAUDE.md`
-4. Semear a Camada de Intenção, o ponteiro de componentes e os **três transversais** com
-   os **esqueletos**, na **raiz** de `refined/` (não preencher o conteúdo — isso é feito
-   pelas skills geradoras):
-   - `refined/visao.md` ← `templates/intencao/visao.md` (a Visão — 3 capítulos)
-   - `refined/componentes.md` ← `templates/contrato/_componentes.md` (ponteiro fino: vocabulário genérico de componentes)
-   - `refined/modelo-dados.md` ← `templates/transversais/modelo-dados.md` (modelo de dados canônico — preenchido por `spec-transversais`)
-   - `refined/requisitos-transversais.md` ← `templates/transversais/requisitos-transversais.md` (`RNF-T-*`/`RF-T-*` — preenchido por `spec-transversais`)
-   - `refined/telas-comuns.md` ← `templates/transversais/telas-comuns.md` (arquétipos `A-NN` — preenchido por `spec-transversais`)
-   - **Não** criar `Requisitos/<feature>.md` no scaffold — cada doc de requisitos é
-     criado por feature (de `templates/contrato/contrato.md`) pelas skills `contrato-*`.
-5. Anexar a primeira entrada em `refined/log.md` (`## [YYYY-MM-DD] scaffold | wiki criado`).
+1. Confirmar diretório e nome do produto.
+2. Copiar `templates/spec.md` → `<dir>/spec.md`, substituindo `<Produto>` e `<AAAA-MM-DD>`.
+3. Copiar `templates/CLAUDE.md` → `<dir>/CLAUDE.md` (regras de escrita que o agente lê
+   antes de tocar na spec).
+4. Criar `<dir>/criticas/` (vazio) — é onde o loop crítico grava os ledgers.
+5. Não preencher conteúdo. Cada seção é preenchida pela skill dona dela:
 
-## Mínimo vs. opcional
-- **Mínimo comum gerado pelo fluxo:** `visao.md` (3 caps) + os 3 transversais (`modelo-dados.md`, `requisitos-transversais.md`, `telas-comuns.md`) + `Requisitos/<feature>.md` por feature (3 caps) + `blueprint.md`.
-- **Opcional** (só quando o projeto pedir): `_archive/`, princípios, capacidades-IA como doc dedicado, roadmap, métricas detalhadas.
+   | Seção | Skill |
+   |---|---|
+   | 1 Contexto · 2 Glossário · 3 Regras de negócio | `spec-contexto` |
+   | 4 Modelo de dados · 5 Requisitos transversais · 6 Arquétipos de tela | `spec-transversais` |
+   | 7.N.1 Fluxo e navegação · 7.N.2 Telas | `feature-telas-fluxos` |
+   | 7.N.3 Requisitos funcionais · 7.N.4 Cenários de teste | `feature-requisitos` |
+   | 7.N.5 Dados | `feature-dados` |
+   | Anexo B Cadeia de valor | `spec-cadeia-valor` |
+
+## Estrutura criada
+
+```
+<dir>/
+  spec.md          # a especificação — arquivo único
+  CLAUDE.md        # regras de escrita do projeto
+  criticas/        # ledgers do loop crítico
+```
+
+Não existem `index.md`, `log.md`, `overview.md`, `blueprint.md`, `componentes.md`, nem
+pasta `Requisitos/`. Uma spec não é um wiki: sumário é a numeração das seções, histórico
+é o git, e o que era documento transversal virou seção.
 
 ## Saída
-- Estrutura FLAT criada: `refined/` com `index.md`, `log.md`, `overview.md`,
-  `blueprint.md`, `visao.md`, `componentes.md` e os três transversais (`modelo-dados.md`,
-  `requisitos-transversais.md`, `telas-comuns.md`) na raiz, mais a pasta `refined/Requisitos/`
-  (vazia). **Estrutura plana** — sem pastas `intencao/` ou `contracts/`; os transversais
-  ficam lado a lado com `visao.md`/`componentes.md` na raiz.
-- `refined/index.md`, `refined/log.md`, `refined/overview.md`, `refined/blueprint.md`, `refined/visao.md`, `refined/componentes.md`, `refined/modelo-dados.md`, `refined/requisitos-transversais.md`, `refined/telas-comuns.md` e `<wiki>/CLAUDE.md` criados a partir dos templates, com o nome do produto e a data preenchidos.
-- O wiki pronto para receber a skill `intencao-visao` (e depois `spec-transversais` e as `contrato-*`).
+`spec.md` e `CLAUDE.md` criados a partir dos templates, com produto e data preenchidos, e
+`criticas/` pronto para o loop crítico.

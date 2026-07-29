@@ -11,10 +11,10 @@ completo e o desvio ausente.
 Regras: bloco `F*` e `J-FLX-*` de `regras/criticas.toml`.
 
 ## Quando usar
-Crítica do §1 (Telas & Fluxos) contra o §2 (RF) de um doc de feature.
+Crítica da 7.N.1 (fluxo e navegação) contra a 7.N.3 (RF) de uma feature.
 
 ## Entrada
-- O doc de feature (Mermaid 1.1, telas 1.2, navegação 1.3, RF do §2.2).
+- A feature (7.N): os dois Mermaid da 7.N.1, as telas da 7.N.2 e os RF da 7.N.3.
 - `regras/criticas.toml` (regras `F*`/`J-FLX-*`, `[vocabulario].desvios_canonicos`).
 - Achados do lint (ausência de RF padrão #5, fluxo sem decisão, navegação ausente,
   desvio canônico não citado). **Não repetir.**
@@ -37,14 +37,14 @@ parágrafo solto.
 
 ## Processo
 
-1. Ler o flowchart 1.1 e listar cada nó de decisão e cada ramo. Ramo que termina sem
+1. Ler o flowchart de fluxo (7.N.1) e listar cada nó de decisão e cada ramo. Ramo que termina sem
    saída declarada é `J-FLX-03`.
 2. Rodar o checklist acima contra os RF. Falta → `J-FLX-01`, com o RF padrão #5 já
    redigido no campo `→`.
 3. **Contradição — J-FLX-02.** Comparar cada aresta do fluxo com os RF: fluxo que
    permite um caminho que um RF proíbe (ou vice-versa). Citar os dois lados.
-4. **Alcançabilidade — J-FLX-03.** Cruzar as telas do 1.2 com o diagrama 1.3: tela sem
-   aresta de entrada, ou estado descrito no 1.2 que nenhum fluxo produz.
+4. **Alcançabilidade — J-FLX-03.** Cruzar as telas da 7.N.2 com o diagrama de navegação:
+   tela sem aresta de entrada, ou estado descrito na tela que nenhum fluxo produz.
 5. Teto: 10 achados. Priorizar o desvio que hoje deixaria o usuário travado sem saída.
 
 ## Como escrever o achado

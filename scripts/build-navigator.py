@@ -124,7 +124,8 @@ def collect():
 
     # ---- Transversais (modelo de dados, requisitos, telas comuns, componentes) ----
     trans = []
-    for name in ("modelo-dados.md", "requisitos-transversais.md", "telas-comuns.md", "componentes.md"):
+    for name in ("modelo-dados.md", "requisitos-transversais.md", "telas-comuns.md", "componentes.md",
+                 "dicionario-dados-integracoes.md"):
         f = REFINED / name
         if f.is_file():
             add_doc(f"wiki/{f.stem}", f, f.stem, trans)
